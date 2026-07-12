@@ -50,7 +50,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${KINFOLK_PORT:-8080}:80"
+      - "${KINFOLK_PORT:-3040}:80"
     depends_on:
       api:
         condition: service_healthy

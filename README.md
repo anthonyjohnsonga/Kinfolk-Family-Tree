@@ -32,7 +32,7 @@ Docker with the Compose plugin is required.
    docker compose up --build -d
    ```
 
-4. Open <http://localhost:8080>. Change `KINFOLK_PORT` in `.env` if port 8080 is unavailable.
+4. Open <http://localhost:3040>. Change `KINFOLK_PORT` in `.env` if port 3040 is unavailable.
 
 5. Create the first administrator account when prompted. Use a unique password of at least 12 characters and store it in a password manager. There is no password-recovery workflow yet.
 

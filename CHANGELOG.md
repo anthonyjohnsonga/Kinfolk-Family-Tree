@@ -8,6 +8,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 - Omit partnership status when adding or editing a person without a selected partner.
 
+### Changed
+
+- Use host port 3040 as the default for source-build and production deployments.
+
 ### Added
 
 - Pull-based production Compose deployment using versioned GHCR images.
