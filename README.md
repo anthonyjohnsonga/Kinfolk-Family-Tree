@@ -172,3 +172,7 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 `SESSION_DAYS` controls session lifetime and defaults to seven days. `COOKIE_SECURE` must remain `false` for plain internal HTTP. Set it to `true` when Kinfolk is served through HTTPS; secure cookies are not transmitted over plain HTTP.
 
 Authentication protects access to the application, but HTTPS is still required before exposing Kinfolk outside a trusted internal network.
+
+## Releases
+
+See [RELEASE.md](RELEASE.md) for the release-candidate gates and tagging process and [CHANGELOG.md](CHANGELOG.md) for notable changes. Git tags publish versioned frontend and API images to GitHub Container Registry and create a GitHub release automatically.
