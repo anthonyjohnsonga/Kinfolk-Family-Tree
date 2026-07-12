@@ -78,6 +78,51 @@ The dedicated migration image is available beginning with release `v0.0.2`; earl
 
 The migration container runs to completion before the API starts. `docker compose ps -a` should show `migrate` exited successfully and the other services running or healthy.
 
+### Move an existing source-build installation
+
+Switching from the original Docker-managed volume to `compose.production.yaml` changes PostgreSQL's storage location. Move the data with a logical backup; do not simply start the production file and assume the old volume is being used.
+
+Create the new layout and dump the currently running database:
+
+```bash
+sudo mkdir -p /srv/kinfolk/database/postgres /srv/kinfolk/database/backups /srv/kinfolk/configure
+sudo chown 999:999 /srv/kinfolk/database/postgres
+sudo chown "$(id -u):$(id -g)" /srv/kinfolk/database/backups
+
+docker compose exec -T db sh -c \
+  'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+  > /srv/kinfolk/database/backups/before-production-move.dump
+```
+
+Confirm the dump is non-empty, stop the old stack without deleting its volume, prepare `kinfolk.env`, and start the production stack:
+
+```bash
+ls -lh /srv/kinfolk/database/backups/before-production-move.dump
+docker compose down
+
+sudo cp deploy/kinfolk.env.example /srv/kinfolk/configure/kinfolk.env
+sudo chmod 600 /srv/kinfolk/configure/kinfolk.env
+sudo nano /srv/kinfolk/configure/kinfolk.env
+
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml pull
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml up -d
+```
+
+Stop application writes, restore the dump into the new database directory, and restart:
+
+```bash
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml stop frontend api
+
+cat /srv/kinfolk/database/backups/before-production-move.dump | \
+  sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml \
+  exec -T db sh -c \
+  'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges'
+
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml up -d
+```
+
+Verify login and family-tree data before removing the old Docker volume. Keep the dump until the migration has been tested thoroughly.
+
 ### Pull-based updates
 
 Back up the database, edit `/srv/kinfolk/configure/kinfolk.env` to the new release number, then run:
