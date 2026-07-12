@@ -20,7 +20,8 @@ Then visit `http://localhost:8080`.
 - Guided new-tree setup
 - Manage multiple trees on one device
 - Add, edit, search, and remove family members
-- Record parent and partner relationships
+- Connect up to two parents per person across unlimited generations
+- Record spouse or partner relationships and marriage dates
 - Automatic generation layout
 - Browser-local persistence
 - Portable JSON import and export

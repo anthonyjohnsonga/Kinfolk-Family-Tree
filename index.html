@@ -103,8 +103,10 @@
         <label class="field full"><span>Full name *</span><input id="nameInput" required maxlength="80" autocomplete="name" placeholder="e.g. Maya Rivera" /></label>
         <label class="field"><span>Birth year</span><input id="birthInput" type="number" min="1000" max="2100" placeholder="1958" /></label>
         <label class="field"><span>Death year</span><input id="deathInput" type="number" min="1000" max="2100" placeholder="Leave blank if living" /></label>
-        <label class="field"><span>Parent</span><select id="parentInput"><option value="">No parent selected</option></select></label>
-        <label class="field"><span>Partner</span><select id="partnerInput"><option value="">No partner selected</option></select></label>
+        <label class="field"><span>Parent 1</span><select id="parentInput"><option value="">No parent selected</option></select></label>
+        <label class="field"><span>Parent 2</span><select id="secondParentInput"><option value="">No second parent selected</option></select></label>
+        <label class="field"><span>Spouse or partner</span><select id="partnerInput"><option value="">No partner selected</option></select></label>
+        <label class="field"><span>Marriage date</span><input id="marriageDateInput" type="date" disabled /></label>
         <label class="field full"><span>About them</span><textarea id="bioInput" rows="3" maxlength="240" placeholder="A favorite memory, place, or detail…"></textarea></label>
       </div>
       <p id="formError" class="form-error" role="alert"></p>
