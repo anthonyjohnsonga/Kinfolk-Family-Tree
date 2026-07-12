@@ -31,3 +31,7 @@ Each tree stays in the browser's `localStorage`. Use **Export** to create a port
 ## GitHub Pages
 
 The project has no build step and can be published directly with GitHub Pages. In the repository settings, choose **Pages**, select **Deploy from a branch**, and publish the repository's root directory.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the project's commit, privacy-check, and push process.
