@@ -1,0 +1,9 @@
+# Private family-tree exports and local test data
+*.kinfolk.json
+family-tree-data/
+
+# Common local editor and operating-system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
