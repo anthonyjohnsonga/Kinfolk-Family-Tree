@@ -6,7 +6,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 No changes yet.
 
-## [0.1.0-rc.1] - 2026-07-12
+## [0.0.1] - 2026-07-12
 
 ### Added
 
@@ -31,5 +31,5 @@ No changes yet.
 
 ## Release naming
 
-- `v0.1.0-rc.1`: first planned release candidate
-- `v0.1.0`: first planned stable release after candidate validation
+- `v0.0.1`: first stable release
+- `v0.1.0-rc.1`: initial release candidate used to validate publishing automation
