@@ -1,0 +1,7 @@
+volumes:
+  kinfolk_backups:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=${KINFOLK_NFS_ADDR:?Set KINFOLK_NFS_ADDR},rw,hard,nfsvers=4
+      device: :${KINFOLK_NFS_EXPORT:?Set KINFOLK_NFS_EXPORT}

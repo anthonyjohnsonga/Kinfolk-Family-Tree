@@ -1,0 +1,26 @@
+services:
+  backup:
+    image: postgres:17-alpine
+    environment:
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB:-kinfolk}
+      PGUSER: ${POSTGRES_USER:-kinfolk}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - kinfolk_backups:/backups
+      - ./scripts:/scripts:ro
+    entrypoint: ["sh", "/scripts/backup.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  kinfolk_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${KINFOLK_BACKUP_PATH:?Set KINFOLK_BACKUP_PATH to an existing absolute host directory}

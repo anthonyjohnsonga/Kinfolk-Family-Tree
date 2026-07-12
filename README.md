@@ -24,7 +24,7 @@ Docker with the Compose plugin is required.
    Copy-Item .env.example .env
    ```
 
-2. Edit `.env` and replace `POSTGRES_PASSWORD` with a long, unique password. The `.env` file is ignored by Git.
+2. Edit `.env` and replace `POSTGRES_PASSWORD` with a long, unique, URL-safe password using letters, numbers, `_`, and `-`. The `.env` file is ignored by Git.
 
 3. Build and start the complete application:
 
@@ -52,6 +52,82 @@ docker compose down
 ```
 
 The `kinfolk_db` Docker volume stores the database. Do not use `docker compose down --volumes` unless you intend to permanently delete all stored trees.
+
+## Storage options
+
+The default deployment uses the Docker-managed `kinfolk_db` volume. This remains the recommended general-purpose configuration.
+
+### Local host directory for PostgreSQL
+
+To place the live database in a specific local directory, set `KINFOLK_DB_PATH` in `.env`. The directory must be an existing absolute path on the Docker host and writable by the PostgreSQL container.
+
+On Linux:
+
+```bash
+sudo mkdir -p /srv/kinfolk/database
+sudo chown 999:999 /srv/kinfolk/database
+docker compose -f compose.yaml -f compose.storage-bind.yaml up --build -d
+```
+
+Do not point `KINFOLK_DB_PATH` at an SMB share. For direct NFS database storage, follow PostgreSQL's NFS requirements, including a `hard` client mount and a synchronous server export. A local database with NAS-hosted backups is safer for most installations.
+
+## Automated backups
+
+Set `KINFOLK_BACKUP_PATH` to an existing local directory or a NAS share already mounted on the Docker host:
+
+```bash
+sudo mkdir -p /srv/kinfolk/backups
+docker compose -f compose.yaml -f compose.backup.yaml up --build -d
+```
+
+The backup service:
+
+- creates a compressed PostgreSQL custom-format dump immediately at startup;
+- repeats according to `BACKUP_INTERVAL_SECONDS` (24 hours by default);
+- keeps dumps for `BACKUP_RETENTION_DAYS` (30 days by default);
+- writes `.partial` files until a dump succeeds;
+- stores only completed files as `kinfolk-YYYYMMDDTHHMMSSZ.dump`.
+
+For SMB, mount the share on the host first and use that mounted directory as `KINFOLK_BACKUP_PATH`. For example, mount it at `/mnt/kinfolk-backups`, verify the Docker host can write to it, then set:
+
+```text
+KINFOLK_BACKUP_PATH=/mnt/kinfolk-backups
+```
+
+This keeps SMB credentials out of Compose and `.env`.
+
+### Direct NFS backup volume
+
+Set `KINFOLK_NFS_ADDR` and `KINFOLK_NFS_EXPORT` in `.env`, then start all three Compose files:
+
+```bash
+docker compose \
+  -f compose.yaml \
+  -f compose.backup.yaml \
+  -f compose.backup-nfs.yaml \
+  up --build -d
+```
+
+The NFS override uses NFSv4 with a hard mount. Ensure the NFS server export allows writes from the Docker host.
+
+### Restore a backup
+
+List available dumps:
+
+```bash
+docker compose -f compose.yaml -f compose.backup.yaml exec backup ls -lh /backups
+```
+
+Stop application writes, run the one-time restore, and restart the services:
+
+```bash
+docker compose -f compose.yaml -f compose.backup.yaml stop frontend api backup
+docker compose -f compose.yaml -f compose.backup.yaml run --rm --no-deps \
+  --entrypoint sh backup /scripts/restore.sh /backups/kinfolk-TIMESTAMP.dump
+docker compose -f compose.yaml -f compose.backup.yaml up -d
+```
+
+Test backup restoration periodically. A backup should not be considered reliable until it has been restored successfully.
 
 ## Local development
 

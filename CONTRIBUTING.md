@@ -27,7 +27,7 @@ Before every commit:
 1. Review `git status --short`.
 2. Review the diff with `git diff` and `git diff --staged`.
 3. Do not stage exported family trees or files containing personal test information.
-4. Confirm no credentials, tokens, private email addresses, or personal family records are present.
+4. Confirm no credentials, tokens, private email addresses, NAS credentials, database dumps, or personal family records are present.
 
 Files ending in `.kinfolk.json` and files inside `family-tree-data/` are ignored as an additional safeguard.
 

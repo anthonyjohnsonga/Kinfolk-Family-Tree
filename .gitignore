@@ -1,6 +1,8 @@
 # Private family-tree exports and local test data
 *.kinfolk.json
 family-tree-data/
+*.dump
+*.dump.partial
 
 # Common local editor and operating-system files
 .DS_Store
