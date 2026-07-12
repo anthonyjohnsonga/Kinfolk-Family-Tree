@@ -11,7 +11,7 @@ RUN npm run build -w @kinfolk/api
 FROM build AS migrate
 CMD ["npm","run","db:migrate","-w","@kinfolk/api"]
 
-FROM node:24-alpine
+FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json ./

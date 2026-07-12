@@ -38,6 +38,84 @@ Docker with the Compose plugin is required.
 
 Compose starts PostgreSQL, waits for it to become healthy, applies database migrations, starts the API, and then starts the frontend.
 
+## Production deployment from release images
+
+`compose.production.yaml` pulls versioned application images from GitHub Container Registry instead of building source on the server. It also requires explicit host storage and allows the configuration file to live outside the repository.
+
+Create the host directories and configuration location:
+
+```bash
+sudo mkdir -p /srv/kinfolk/data/postgres /srv/kinfolk/backups /etc/kinfolk
+sudo chown 999:999 /srv/kinfolk/data/postgres
+sudo chown "$(id -u):$(id -g)" /srv/kinfolk/backups
+sudo cp deploy/kinfolk.env.example /etc/kinfolk/kinfolk.env
+sudo chown root:root /etc/kinfolk/kinfolk.env
+sudo chmod 600 /etc/kinfolk/kinfolk.env
+sudo nano /etc/kinfolk/kinfolk.env
+```
+
+Set a real password, the desired release in `KINFOLK_VERSION`, and absolute storage paths. Start the release deployment:
+
+```bash
+sudo docker compose \
+  --env-file /etc/kinfolk/kinfolk.env \
+  -f compose.production.yaml \
+  pull
+
+sudo docker compose \
+  --env-file /etc/kinfolk/kinfolk.env \
+  -f compose.production.yaml \
+  up -d
+```
+
+The production services use three release images:
+
+- `kinfolk-family-tree-web`
+- `kinfolk-family-tree-api`
+- `kinfolk-family-tree-migrate`
+
+The dedicated migration image is available beginning with release `v0.0.2`; earlier releases must use the source-build Compose deployment.
+
+The migration container runs to completion before the API starts. `docker compose ps -a` should show `migrate` exited successfully and the other services running or healthy.
+
+### Pull-based updates
+
+Back up the database, edit `/etc/kinfolk/kinfolk.env` to the new release number, then run:
+
+```bash
+sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml pull
+sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml up -d
+sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml ps -a
+```
+
+Application containers are replaced while the database remains at `KINFOLK_DB_PATH` and configuration remains at the path supplied to `--env-file`.
+
+### Production backups
+
+Add the backup Compose layer while keeping the same external configuration:
+
+```bash
+sudo docker compose \
+  --env-file /etc/kinfolk/kinfolk.env \
+  -f compose.production.yaml \
+  -f compose.backup.yaml \
+  up -d
+```
+
+`KINFOLK_BACKUP_PATH` may point to local storage or an SMB share already mounted on the host. Add `-f compose.backup-nfs.yaml` for the direct NFS backup volume.
+
+### Rollback
+
+Set `KINFOLK_VERSION` back to a previously published version, then run `pull` and `up -d` again. Application rollback does not reverse database migrations. If a release introduced an incompatible migration, restore the database backup taken before that update.
+
+If GHCR packages are not public, authenticate the server before pulling:
+
+```bash
+echo "$GITHUB_PAT" | sudo docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+Use a fine-grained token with read-only package access and do not store it in the Kinfolk environment file.
+
 ## Operations
 
 View service status and logs:

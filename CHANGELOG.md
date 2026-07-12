@@ -8,6 +8,12 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 - Omit partnership status when adding or editing a person without a selected partner.
 
+### Added
+
+- Pull-based production Compose deployment using versioned GHCR images.
+- Dedicated release image for applying database migrations.
+- External production configuration files and configurable database paths.
+
 ## [0.0.1] - 2026-07-12
 
 ### Added

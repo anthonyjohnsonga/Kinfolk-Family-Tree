@@ -15,6 +15,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://kinfolk:test@localhost:5432/kinfolk
       POSTGRES_PASSWORD: ci_only_password
+      KINFOLK_VERSION: ci
+      KINFOLK_DB_PATH: /tmp/kinfolk-postgres
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -40,6 +42,9 @@ jobs:
       - name: Validate base Compose configuration
         run: docker compose config --quiet
 
+      - name: Validate production Compose configuration
+        run: docker compose -f compose.production.yaml config --quiet
+
   containers:
     runs-on: ubuntu-latest
     strategy:
@@ -47,8 +52,13 @@ jobs:
         include:
           - name: web
             dockerfile: Dockerfile
+            target: runtime
           - name: api
             dockerfile: Dockerfile.api
+            target: runtime
+          - name: migrate
+            dockerfile: Dockerfile.api
+            target: migrate
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -61,6 +71,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
           push: false
           tags: kinfolk-${{ matrix.name }}:ci
           cache-from: type=gha,scope=${{ matrix.name }}

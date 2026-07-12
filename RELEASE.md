@@ -1,6 +1,6 @@
 # Release Process
 
-The first stable release is `v0.0.1`. Do not create a stable tag until every required release gate below passes on a clean Docker host.
+The current stable release is `v0.0.1`. Do not create a new stable tag until every required release gate below passes on a clean Docker host.
 
 ## Release gates
 
@@ -30,14 +30,16 @@ After every gate passes:
 ```bash
 git switch main
 git pull --ff-only origin main
-git tag -a v0.0.1 -m "Kinfolk v0.0.1"
-git push origin v0.0.1
+VERSION=v0.0.2
+git tag -a "$VERSION" -m "Kinfolk $VERSION"
+git push origin "$VERSION"
 ```
 
 Pushing the tag triggers `.github/workflows/release.yaml`. It publishes:
 
-- `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:0.0.1`
-- `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:0.0.1`
+- `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:<version>`
+- `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:<version>`
+- `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:<version>`
 - a GitHub release with generated notes;
 - provenance attestations for both container images.
 
@@ -45,11 +47,15 @@ Pushing the tag triggers `.github/workflows/release.yaml`. It publishes:
 
 ```bash
 gh attestation verify \
-  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:0.0.1 \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:0.0.2 \
   -R anthonyjohnsonga/Kinfolk-Family-Tree
 
 gh attestation verify \
-  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:0.0.1 \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:0.0.2 \
+  -R anthonyjohnsonga/Kinfolk-Family-Tree
+
+gh attestation verify \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:0.0.2 \
   -R anthonyjohnsonga/Kinfolk-Family-Tree
 ```
 

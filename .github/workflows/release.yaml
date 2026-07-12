@@ -20,8 +20,13 @@ jobs:
         include:
           - name: web
             dockerfile: Dockerfile
+            target: runtime
           - name: api
             dockerfile: Dockerfile.api
+            target: runtime
+          - name: migrate
+            dockerfile: Dockerfile.api
+            target: migrate
     steps:
       - name: Check out tagged source
         uses: actions/checkout@v6
@@ -51,6 +56,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
