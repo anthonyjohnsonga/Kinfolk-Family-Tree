@@ -92,11 +92,18 @@ function populateSelects(currentId = '') {
   els.secondParent.innerHTML = `<option value="">No second parent selected</option>${options}`;
   els.partner.innerHTML = `<option value="">No partner selected</option>${options}`;
 }
+function suggestSecondParent() {
+  if (!els.parent.value || els.secondParent.value) return;
+  const firstParent = people.find(person => person.id === els.parent.value);
+  const spouse = firstParent && people.find(person => person.id === firstParent.partnerId && person.partnerId === firstParent.id);
+  if (spouse && spouse.id !== els.id.value) els.secondParent.value = spouse.id;
+}
 function openForm(id = '') {
   els.form.reset(); els.error.textContent = ''; els.id.value = id; populateSelects(id);
   const person = people.find(p => p.id === id);
   $('#formEyebrow').textContent = person ? 'EDIT RELATIVE' : 'NEW RELATIVE'; $('#formTitle').textContent = person ? 'Edit person' : 'Add a person'; els.delete.hidden = !person;
   if (person) { els.name.value=person.name; els.birth.value=person.birth; els.death.value=person.death; els.parent.value=person.parentIds?.[0] || ''; els.secondParent.value=person.parentIds?.[1] || ''; els.partner.value=person.partnerId; els.marriageDate.value=person.marriageDate || ''; els.bio.value=person.bio; }
+  suggestSecondParent();
   els.marriageDate.disabled = !els.partner.value;
   els.dialog.showModal(); setTimeout(() => els.name.focus(), 50);
 }
@@ -137,6 +144,7 @@ $('#zoomOutBtn').addEventListener('click', () => { zoom = Math.max(.6, zoom - .1
 $('#resetViewBtn').addEventListener('click', () => { zoom=1; applyZoom(); $('#treeViewport').scrollTo({top:0,left:0,behavior:'smooth'}); });
 $('#addPersonBtn').addEventListener('click', () => openForm()); document.querySelectorAll('.add-trigger').forEach(b => b.addEventListener('click', () => openForm()));
 els.partner.addEventListener('change', () => { els.marriageDate.disabled = !els.partner.value; if (!els.partner.value) els.marriageDate.value=''; });
+els.parent.addEventListener('change', () => { els.secondParent.value=''; suggestSecondParent(); });
 els.search.addEventListener('input', () => { const query=els.search.value.trim().toLowerCase(); document.querySelectorAll('.person-card').forEach(card => { const p=people.find(x=>x.id===card.dataset.id); card.classList.toggle('highlight', !!query && p.name.toLowerCase().includes(query)); card.style.opacity = query && !p.name.toLowerCase().includes(query) ? '.35' : '1'; }); });
 $('#exportBtn').addEventListener('click', () => {
   const tree = library[currentTreeId]; if (!tree) return;
