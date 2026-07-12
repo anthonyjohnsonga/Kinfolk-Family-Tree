@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+No changes yet.
+
+## [0.1.0-rc.1] - 2026-07-12
+
 ### Added
 
 - React and TypeScript family-tree interface
