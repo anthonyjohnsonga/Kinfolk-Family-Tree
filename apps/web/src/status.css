@@ -1,0 +1,62 @@
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.status-error {
+  margin: 16px 0;
+  padding: 15px;
+  border: 1px solid #e8bcb7;
+  border-radius: 11px;
+  background: #fff3f1;
+  color: #873c36;
+}
+
+.status-error p {
+  margin: 5px 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.status-error button {
+  padding: 8px 12px;
+}
+
+.loading-state,
+.empty-message,
+.empty-tree {
+  display: grid;
+  place-items: center;
+  min-height: 110px;
+  text-align: center;
+  color: #68786f;
+}
+
+.loading-state span {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #d8e1d8;
+  border-top-color: #2d654d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.empty-message p,
+.empty-tree p {
+  margin: 6px 0 14px;
+}
+
+.empty-tree {
+  align-content: center;
+}
+
+.empty-tree strong {
+  color: #183128;
+  font: 600 26px Georgia, serif;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
