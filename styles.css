@@ -48,7 +48,8 @@ h1 { margin: 0; font-size: clamp(38px, 5vw, 62px); line-height: 1; letter-spacin
 .tree-viewport { position: relative; min-height: 590px; overflow: auto; background-color: #faf9f3; background-image: radial-gradient(#dce3d9 1px, transparent 1px); background-size: 22px 22px; }
 .tree-canvas { position: relative; min-width: 100%; min-height: 590px; transform-origin: top center; transition: transform .2s ease; padding: 55px; }
 .generation { position: relative; display: flex; justify-content: center; gap: 36px; margin-bottom: 68px; }
-.generation:not(:last-child)::after { content:""; position:absolute; bottom:-68px; left:50%; height:68px; border-left:2px solid var(--line); }
+.tree-links { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:0; }.parent-link { fill:none; stroke:var(--line); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.generation { z-index:1; }
 .person-card { position: relative; width: 190px; min-height: 118px; padding: 18px 15px 14px; border: 1px solid #d7dfd5; border-radius: 14px; background: white; box-shadow: 0 8px 22px rgba(40,67,52,.08); text-align: center; transition: .18s ease; }
 .person-card:hover, .person-card.highlight { transform: translateY(-4px); border-color: #78a187; box-shadow: 0 12px 28px rgba(40,67,52,.15); }
 .couple-unit { display:flex; align-items:center; }.couple-link { position:relative; width:54px; height:2px; background:var(--gold); flex:0 0 54px; }.couple-link::before,.couple-link::after { content:""; position:absolute; top:-3px; width:8px; height:8px; border:2px solid var(--gold); border-radius:50%; background:var(--paper); }.couple-link::before { left:-5px; }.couple-link::after { right:-5px; }.couple-link span { position:absolute; top:9px; left:50%; width:110px; transform:translateX(-50%); color:var(--muted); font-size:9px; text-align:center; }

@@ -59,6 +59,29 @@ function createPersonCard(person) {
   card.addEventListener('click', () => showDetails(person.id));
   return card;
 }
+function drawParentConnections() {
+  els.canvas.querySelector('.tree-links')?.remove();
+  if (!people.length) return;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('tree-links'); svg.setAttribute('aria-hidden','true');
+  const canvasRect = els.canvas.getBoundingClientRect();
+  people.forEach(child => {
+    const childCard = els.canvas.querySelector(`.person-card[data-id="${CSS.escape(child.id)}"]`); if (!childCard) return;
+    const childRect = childCard.getBoundingClientRect();
+    child.parentIds.forEach(parentId => {
+      const parentCard = els.canvas.querySelector(`.person-card[data-id="${CSS.escape(parentId)}"]`); if (!parentCard) return;
+      const parentRect = parentCard.getBoundingClientRect();
+      const startX = (parentRect.left - canvasRect.left + parentRect.width / 2) / zoom;
+      const startY = (parentRect.bottom - canvasRect.top) / zoom;
+      const endX = (childRect.left - canvasRect.left + childRect.width / 2) / zoom;
+      const endY = (childRect.top - canvasRect.top) / zoom;
+      const middleY = startY + (endY - startY) / 2;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M ${startX} ${startY} V ${middleY} H ${endX} V ${endY}`); path.classList.add('parent-link'); svg.appendChild(path);
+    });
+  });
+  els.canvas.prepend(svg);
+}
 
 function render() {
   els.count.textContent = people.length;
@@ -84,6 +107,7 @@ function render() {
     els.canvas.appendChild(row);
   });
   applyZoom();
+  requestAnimationFrame(drawParentConnections);
 }
 
 function populateSelects(currentId = '') {
@@ -138,7 +162,7 @@ els.delete.addEventListener('click', () => {
   people = people.filter(person => person.id !== id).map(person => ({...person, parentIds:(person.parentIds || []).filter(parentId => parentId !== id), partnerId: person.partnerId === id ? '' : person.partnerId, marriageDate:person.partnerId === id ? '' : person.marriageDate})); savePeople(); render(); els.dialog.close();
 });
 
-function applyZoom() { els.canvas.style.transform = `scale(${zoom})`; }
+function applyZoom() { els.canvas.style.transform = `scale(${zoom})`; requestAnimationFrame(drawParentConnections); }
 $('#zoomInBtn').addEventListener('click', () => { zoom = Math.min(1.4, zoom + .1); applyZoom(); });
 $('#zoomOutBtn').addEventListener('click', () => { zoom = Math.max(.6, zoom - .1); applyZoom(); });
 $('#resetViewBtn').addEventListener('click', () => { zoom=1; applyZoom(); $('#treeViewport').scrollTo({top:0,left:0,behavior:'smooth'}); });
@@ -176,5 +200,6 @@ els.importInput.addEventListener('change', async () => {
   } catch { $('#homeMessage').textContent='That file is not a valid Kinfolk tree export.'; }
   els.importInput.value='';
 });
+window.addEventListener('resize', () => requestAnimationFrame(drawParentConnections));
 
 refreshTreeSelect();
