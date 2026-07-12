@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+No changes yet.
+
+## [0.0.2] - 2026-07-12
+
 ### Fixed
 
 - Omit partnership status when adding or editing a person without a selected partner.
