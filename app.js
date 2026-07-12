@@ -41,11 +41,23 @@ function normalizePerson(person) {
   const parentIds = Array.isArray(person.parentIds) ? person.parentIds : (person.parentId ? [person.parentId] : []);
   return {...person, parentIds:[...new Set(parentIds.filter(Boolean))].slice(0,2), marriageDate:person.marriageDate || ''};
 }
-function generationOf(person, trail = new Set()) {
+function baseGenerationOf(person, trail = new Set()) {
   if (!person.parentIds?.length || trail.has(person.id)) return 0;
   const nextTrail = new Set(trail); nextTrail.add(person.id);
   const parents = person.parentIds.map(id => people.find(p => p.id === id)).filter(Boolean);
-  return parents.length ? Math.max(...parents.map(parent => generationOf(parent, nextTrail))) + 1 : 0;
+  return parents.length ? Math.max(...parents.map(parent => baseGenerationOf(parent, nextTrail))) + 1 : 0;
+}
+function generationOf(person) {
+  const partner = people.find(p => p.id === person.partnerId && p.partnerId === person.id);
+  return Math.max(baseGenerationOf(person), partner ? baseGenerationOf(partner) : 0);
+}
+function createPersonCard(person) {
+  const card = document.createElement('button'); card.type = 'button'; card.className = 'person-card'; card.dataset.id = person.id;
+  const parents = person.parentIds.map(id => people.find(p => p.id === id)).filter(Boolean);
+  const parentNames = parents.map(parent => parent.name.split(' ')[0]).join(' & ');
+  card.innerHTML = `<span class="avatar">${escapeHtml(initials(person.name))}</span><h3>${escapeHtml(person.name)}</h3><p class="years">${escapeHtml(years(person))}</p>${parents.length ? `<span class="relation">Child of ${escapeHtml(parentNames)}</span>` : '<span class="relation">Family root</span>'}`;
+  card.addEventListener('click', () => showDetails(person.id));
+  return card;
 }
 
 function render() {
@@ -56,12 +68,18 @@ function render() {
   people.forEach(person => { const gen = generationOf(person); if (!groups.has(gen)) groups.set(gen, []); groups.get(gen).push(person); });
   [...groups.keys()].sort((a,b) => a-b).forEach(gen => {
     const row = document.createElement('div'); row.className = 'generation'; row.dataset.generation = gen;
+    const rendered = new Set();
     groups.get(gen).forEach(person => {
-      const card = document.createElement('button'); card.type = 'button'; card.className = 'person-card'; card.dataset.id = person.id;
-      const parents = person.parentIds.map(id => people.find(p => p.id === id)).filter(Boolean);
-      const parentNames = parents.map(parent => parent.name.split(' ')[0]).join(' & ');
-      card.innerHTML = `<span class="avatar">${escapeHtml(initials(person.name))}</span><h3>${escapeHtml(person.name)}</h3><p class="years">${escapeHtml(years(person))}</p>${parents.length ? `<span class="relation">Child of ${escapeHtml(parentNames)}</span>` : '<span class="relation">Family root</span>'}`;
-      card.addEventListener('click', () => showDetails(person.id)); row.appendChild(card);
+      if (rendered.has(person.id)) return;
+      const partner = people.find(p => p.id === person.partnerId && p.partnerId === person.id && generationOf(p) === gen);
+      if (partner && !rendered.has(partner.id)) {
+        const couple = document.createElement('div'); couple.className = 'couple-unit';
+        couple.appendChild(createPersonCard(person));
+        const link = document.createElement('div'); link.className = 'couple-link';
+        link.innerHTML = `<span>${person.marriageDate ? `Married ${escapeHtml(new Date(`${person.marriageDate}T00:00:00`).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}))}` : 'Partners'}</span>`;
+        couple.appendChild(link); couple.appendChild(createPersonCard(partner)); row.appendChild(couple); rendered.add(partner.id);
+      } else { row.appendChild(createPersonCard(person)); }
+      rendered.add(person.id);
     });
     els.canvas.appendChild(row);
   });
