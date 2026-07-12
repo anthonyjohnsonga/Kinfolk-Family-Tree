@@ -7,7 +7,7 @@ const $ = (selector) => document.querySelector(selector);
 const els = {
   canvas: $('#treeCanvas'), empty: $('#emptyState'), count: $('#peopleCount'), dialog: $('#personDialog'),
   form: $('#personForm'), id: $('#personId'), name: $('#nameInput'), birth: $('#birthInput'), death: $('#deathInput'),
-  parent: $('#parentInput'), secondParent: $('#secondParentInput'), partner: $('#partnerInput'), marriageDate: $('#marriageDateInput'), bio: $('#bioInput'), error: $('#formError'), delete: $('#deleteBtn'),
+  parent: $('#parentInput'), secondParent: $('#secondParentInput'), partner: $('#partnerInput'), marriageDate: $('#marriageDateInput'), sibling:$('#siblingInput'), siblingType:$('#siblingTypeInput'), bio: $('#bioInput'), error: $('#formError'), delete: $('#deleteBtn'),
   details: $('#detailDialog'), detailContent: $('#detailContent'), search: $('#searchInput'),
   home: $('#homePage'), app: $('#appPage'), treeSelect: $('#treeSelect'), openTree: $('#openTreeBtn'),
   newTreeDialog: $('#newTreeDialog'), newTreeForm: $('#newTreeForm'), importInput: $('#importInput')
@@ -39,7 +39,7 @@ function initials(name) { return name.split(/\s+/).slice(0,2).map(part => part[0
 function years(p) { return `${p.birth || '?'} — ${p.death || 'present'}`; }
 function normalizePerson(person) {
   const parentIds = Array.isArray(person.parentIds) ? person.parentIds : (person.parentId ? [person.parentId] : []);
-  return {...person, parentIds:[...new Set(parentIds.filter(Boolean))].slice(0,2), marriageDate:person.marriageDate || ''};
+  return {...person, parentIds:[...new Set(parentIds.filter(Boolean))].slice(0,2), marriageDate:person.marriageDate || '', siblingLinks:Array.isArray(person.siblingLinks) ? person.siblingLinks : []};
 }
 function baseGenerationOf(person, trail = new Set()) {
   if (!person.parentIds?.length || trail.has(person.id)) return 0;
@@ -115,6 +115,7 @@ function populateSelects(currentId = '') {
   els.parent.innerHTML = `<option value="">No parent selected</option>${options}`;
   els.secondParent.innerHTML = `<option value="">No second parent selected</option>${options}`;
   els.partner.innerHTML = `<option value="">No partner selected</option>${options}`;
+  els.sibling.innerHTML = `<option value="">No sibling selected</option>${options}`;
 }
 function suggestSecondParent() {
   if (!els.parent.value || els.secondParent.value) return;
@@ -129,6 +130,7 @@ function openForm(id = '') {
   if (person) { els.name.value=person.name; els.birth.value=person.birth; els.death.value=person.death; els.parent.value=person.parentIds?.[0] || ''; els.secondParent.value=person.parentIds?.[1] || ''; els.partner.value=person.partnerId; els.marriageDate.value=person.marriageDate || ''; els.bio.value=person.bio; }
   suggestSecondParent();
   els.marriageDate.disabled = !els.partner.value;
+  els.siblingType.disabled = true;
   els.dialog.showModal(); setTimeout(() => els.name.focus(), 50);
 }
 function showDetails(id) {
@@ -136,8 +138,12 @@ function showDetails(id) {
   const partner = people.find(person => person.id === p.partnerId);
   const parents = p.parentIds.map(parentId => people.find(person => person.id === parentId)).filter(Boolean);
   const children = people.filter(person => person.parentIds?.includes(p.id));
+  const siblingMap = new Map();
+  people.filter(person => person.id !== p.id && person.parentIds?.some(parentId => p.parentIds.includes(parentId))).forEach(person => { const shared=person.parentIds.filter(parentId=>p.parentIds.includes(parentId)).length; siblingMap.set(person.id,{person,type:shared > 1 ? 'full' : 'half'}); });
+  p.siblingLinks.forEach(link => { const person=people.find(candidate=>candidate.id===link.personId); if (person) siblingMap.set(person.id,{person,type:link.type || 'sibling'}); });
+  const siblingText = [...siblingMap.values()].map(item => `${escapeHtml(item.person.name)} (${escapeHtml(item.type === 'sibling' ? 'sibling' : `${item.type} sibling`)})`).join(', ');
   const marriage = partner && p.marriageDate ? ` · Married ${new Date(`${p.marriageDate}T00:00:00`).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}` : '';
-  const connections = [parents.length ? `<strong>Parents</strong><span>${parents.map(x=>escapeHtml(x.name)).join(' & ')}</span>` : '', children.length ? `<strong>Children</strong><span>${children.map(x=>escapeHtml(x.name)).join(', ')}</span>` : ''].filter(Boolean).join('');
+  const connections = [parents.length ? `<strong>Parents</strong><span>${parents.map(x=>escapeHtml(x.name)).join(' & ')}</span>` : '', children.length ? `<strong>Children</strong><span>${children.map(x=>escapeHtml(x.name)).join(', ')}</span>` : '', siblingText ? `<strong>Siblings</strong><span>${siblingText}</span>` : ''].filter(Boolean).join('');
   els.detailContent.innerHTML = `<div class="detail-head"><button class="close-button" style="float:right" aria-label="Close">×</button><span class="avatar">${escapeHtml(initials(p.name))}</span><p class="eyebrow">FAMILY MEMBER</p><h2>${escapeHtml(p.name)}</h2><p class="years">${escapeHtml(years(p))}${partner ? ` · Partner of ${escapeHtml(partner.name)}${marriage}` : ''}</p></div>${connections ? `<div class="connection-list">${connections}</div>` : ''}<p class="detail-bio">${escapeHtml(p.bio || 'No story has been added yet.')}</p><div class="detail-actions"><button class="button secondary close-detail">Close</button><button class="button primary edit-detail">Edit person</button></div>`;
   els.detailContent.querySelectorAll('.close-button,.close-detail').forEach(b => b.addEventListener('click', () => els.details.close()));
   els.detailContent.querySelector('.edit-detail').addEventListener('click', () => { els.details.close(); openForm(id); }); els.details.showModal();
@@ -150,16 +156,20 @@ els.form.addEventListener('submit', event => {
   if (birth && death && death < birth) { els.error.textContent = 'Death year cannot be before birth year.'; return; }
   if (els.parent.value && els.parent.value === els.secondParent.value) { els.error.textContent = 'Choose two different parents.'; return; }
   const oldRecord = people.find(p => p.id === els.id.value);
-  const record = { id: els.id.value || crypto.randomUUID(), name: els.name.value.trim(), birth: els.birth.value, death: els.death.value, parentIds:[els.parent.value,els.secondParent.value].filter(Boolean), partnerId: els.partner.value, marriageDate:els.partner.value ? els.marriageDate.value : '', bio: els.bio.value.trim() };
+  const record = { id: els.id.value || crypto.randomUUID(), name: els.name.value.trim(), birth: els.birth.value, death: els.death.value, parentIds:[els.parent.value,els.secondParent.value].filter(Boolean), partnerId: els.partner.value, marriageDate:els.partner.value ? els.marriageDate.value : '', siblingLinks:oldRecord?.siblingLinks || [], bio: els.bio.value.trim() };
   const index = people.findIndex(p => p.id === record.id); if (index >= 0) people[index] = record; else people.push(record);
   if (oldRecord?.partnerId && oldRecord.partnerId !== record.partnerId) { const oldPartner=people.find(p=>p.id===oldRecord.partnerId); if (oldPartner?.partnerId===record.id) { oldPartner.partnerId=''; oldPartner.marriageDate=''; } }
   if (record.partnerId) { const partner = people.find(p => p.id === record.partnerId); if (partner) { partner.partnerId = record.id; partner.marriageDate = record.marriageDate; } }
+  if (els.sibling.value) {
+    record.siblingLinks = record.siblingLinks.filter(link => link.personId !== els.sibling.value); record.siblingLinks.push({personId:els.sibling.value,type:els.siblingType.value});
+    const sibling=people.find(person=>person.id===els.sibling.value); if (sibling) { sibling.siblingLinks=(sibling.siblingLinks || []).filter(link=>link.personId!==record.id); sibling.siblingLinks.push({personId:record.id,type:els.siblingType.value}); }
+  }
   savePeople(); render(); els.dialog.close();
 });
 els.delete.addEventListener('click', () => {
   const id = els.id.value; const p = people.find(person => person.id === id);
   if (!p || !confirm(`Remove ${p.name} from the tree?`)) return;
-  people = people.filter(person => person.id !== id).map(person => ({...person, parentIds:(person.parentIds || []).filter(parentId => parentId !== id), partnerId: person.partnerId === id ? '' : person.partnerId, marriageDate:person.partnerId === id ? '' : person.marriageDate})); savePeople(); render(); els.dialog.close();
+  people = people.filter(person => person.id !== id).map(person => ({...person, parentIds:(person.parentIds || []).filter(parentId => parentId !== id), partnerId: person.partnerId === id ? '' : person.partnerId, marriageDate:person.partnerId === id ? '' : person.marriageDate, siblingLinks:(person.siblingLinks || []).filter(link=>link.personId!==id)})); savePeople(); render(); els.dialog.close();
 });
 
 function applyZoom() { els.canvas.style.transform = `scale(${zoom})`; requestAnimationFrame(drawParentConnections); }
@@ -169,6 +179,7 @@ $('#resetViewBtn').addEventListener('click', () => { zoom=1; applyZoom(); $('#tr
 $('#addPersonBtn').addEventListener('click', () => openForm()); document.querySelectorAll('.add-trigger').forEach(b => b.addEventListener('click', () => openForm()));
 els.partner.addEventListener('change', () => { els.marriageDate.disabled = !els.partner.value; if (!els.partner.value) els.marriageDate.value=''; });
 els.parent.addEventListener('change', () => { els.secondParent.value=''; suggestSecondParent(); });
+els.sibling.addEventListener('change', () => { els.siblingType.disabled=!els.sibling.value; });
 els.search.addEventListener('input', () => { const query=els.search.value.trim().toLowerCase(); document.querySelectorAll('.person-card').forEach(card => { const p=people.find(x=>x.id===card.dataset.id); card.classList.toggle('highlight', !!query && p.name.toLowerCase().includes(query)); card.style.opacity = query && !p.name.toLowerCase().includes(query) ? '.35' : '1'; }); });
 $('#exportBtn').addEventListener('click', () => {
   const tree = library[currentTreeId]; if (!tree) return;
@@ -181,7 +192,7 @@ els.newTreeForm.addEventListener('submit', event => {
   if (event.submitter?.value === 'cancel') return;
   event.preventDefault();
   const id = crypto.randomUUID();
-  const firstPerson = { id: crypto.randomUUID(), name: $('#firstPersonName').value.trim(), birth: $('#firstPersonBirth').value, death:'', parentIds:[], partnerId:'', marriageDate:'', bio: $('#firstPersonRelation').value.trim() ? `Relationship: ${$('#firstPersonRelation').value.trim()}` : '' };
+  const firstPerson = { id: crypto.randomUUID(), name: $('#firstPersonName').value.trim(), birth: $('#firstPersonBirth').value, death:'', parentIds:[], partnerId:'', marriageDate:'', siblingLinks:[], bio: $('#firstPersonRelation').value.trim() ? `Relationship: ${$('#firstPersonRelation').value.trim()}` : '' };
   library[id] = { id, name: $('#newTreeName').value.trim(), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), people:[firstPerson] };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(library)); els.newTreeDialog.close(); openTree(id);
 });

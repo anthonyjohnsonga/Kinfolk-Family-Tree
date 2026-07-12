@@ -22,6 +22,7 @@ Then visit `http://localhost:8080`.
 - Add, edit, search, and remove family members
 - Connect up to two parents per person across unlimited generations
 - Record spouse or partner relationships and marriage dates
+- Add full, half, step, adopted, and general sibling connections
 - Automatic generation layout
 - Browser-local persistence
 - Portable JSON import and export
