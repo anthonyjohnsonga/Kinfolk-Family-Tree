@@ -70,9 +70,14 @@ npm run dev:web
 
 The Vite server runs at <http://localhost:5173> and proxies API calls to port 3000.
 
-## Current migration status
+## Current features
 
-The server-backed foundation currently supports creating, listing, and opening family trees and adding people. The PostgreSQL schema already includes parent, partnership, marriage, sibling, and per-tree theme relationships. The richer relationship editor and visual layout from the original browser-only prototype will be migrated onto these API models next.
+- Create, list, and open server-stored family trees
+- Add, edit, and delete people
+- Connect up to two parents and render multiple generations
+- Connect couples with partnership status and marriage dates
+- Add full, half, step, adopted, and general sibling relationships
+- Customize and persist each tree's style and colors
 
 ## Privacy
 
