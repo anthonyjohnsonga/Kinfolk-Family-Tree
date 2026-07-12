@@ -14,6 +14,38 @@ python -m http.server 8080
 
 Then visit `http://localhost:8080`.
 
+## Run with Docker Compose
+
+Docker Desktop or another Docker installation with Compose is required.
+
+Build and start Kinfolk:
+
+```powershell
+docker compose up --build -d
+```
+
+Open <http://localhost:8080>. To use another host port, set `KINFOLK_PORT` before starting:
+
+```powershell
+$env:KINFOLK_PORT = 3000
+docker compose up --build -d
+```
+
+View status and logs:
+
+```powershell
+docker compose ps
+docker compose logs -f kinfolk
+```
+
+Stop the application:
+
+```powershell
+docker compose down
+```
+
+Family trees remain in each visitor's browser storage; the container does not receive or persist that information.
+
 ## Features
 
 - Home page for creating or reopening trees

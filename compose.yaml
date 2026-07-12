@@ -1,0 +1,10 @@
+services:
+  kinfolk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kinfolk-family-tree:local
+    container_name: kinfolk-family-tree
+    ports:
+      - "${KINFOLK_PORT:-8080}:80"
+    restart: unless-stopped

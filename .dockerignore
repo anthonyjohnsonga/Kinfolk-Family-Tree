@@ -1,0 +1,12 @@
+.git
+.gitignore
+.github
+.vscode
+.idea
+family-tree-data
+*.kinfolk.json
+CONTRIBUTING.md
+README.md
+compose.yaml
+Dockerfile
+.dockerignore
