@@ -12,6 +12,7 @@ const els = {
   home: $('#homePage'), app: $('#appPage'), treeSelect: $('#treeSelect'), openTree: $('#openTreeBtn'),
   newTreeDialog: $('#newTreeDialog'), newTreeForm: $('#newTreeForm'), importInput: $('#importInput')
 };
+const DEFAULT_THEME = {style:'botanical',background:'#faf9f3',tree:'#76927b',accent:'#d7a74c'};
 
 function loadLibrary() {
   try { const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)); return stored && typeof stored === 'object' ? stored : {}; }
@@ -32,8 +33,16 @@ function showHome() { currentTreeId = ''; people = []; els.app.hidden = true; el
 function openTree(id) {
   const tree = library[id]; if (!tree) return;
   currentTreeId = id; people = tree.people.map(normalizePerson); tree.people = people; savePeople(); els.home.hidden = true; els.app.hidden = false;
-  $('#treeLabel').textContent = tree.name.toUpperCase(); $('#treeTitle').textContent = tree.name; render();
+  $('#treeLabel').textContent = tree.name.toUpperCase(); $('#treeTitle').textContent = tree.name; applyTheme(tree.theme || DEFAULT_THEME); render();
 }
+function applyTheme(theme) {
+  const value={...DEFAULT_THEME,...theme}; const viewport=$('#treeViewport'); const preview=$('.design-preview');
+  viewport.style.setProperty('--tree-bg',value.background); viewport.style.setProperty('--tree-art',value.tree); viewport.style.setProperty('--tree-accent',value.accent);
+  preview.style.setProperty('--tree-bg',value.background); preview.style.setProperty('--tree-art',value.tree);
+  viewport.classList.remove('design-botanical','design-classic','design-minimal'); viewport.classList.add(`design-${value.style}`);
+}
+function readDesignForm() { return {style:$('#designStyleInput').value,background:$('#backgroundColorInput').value,tree:$('#treeColorInput').value,accent:$('#accentColorInput').value}; }
+function fillDesignForm(theme) { const value={...DEFAULT_THEME,...theme}; $('#designStyleInput').value=value.style; $('#backgroundColorInput').value=value.background; $('#treeColorInput').value=value.tree; $('#accentColorInput').value=value.accent; applyTheme(value); }
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function initials(name) { return name.split(/\s+/).slice(0,2).map(part => part[0]).join('').toUpperCase(); }
 function years(p) { return `${p.birth || '?'} — ${p.death || 'present'}`; }
@@ -199,6 +208,10 @@ els.newTreeForm.addEventListener('submit', event => {
 els.treeSelect.addEventListener('change', () => { els.openTree.disabled = !els.treeSelect.value; });
 els.openTree.addEventListener('click', () => openTree(els.treeSelect.value));
 $('#homeBtn').addEventListener('click', showHome);
+$('#designBtn').addEventListener('click', () => { fillDesignForm(library[currentTreeId]?.theme); $('#designDialog').showModal(); });
+document.querySelectorAll('#designForm input,#designForm select').forEach(input => input.addEventListener('input', () => applyTheme(readDesignForm())));
+$('#designForm').addEventListener('submit', event => { if (event.submitter?.value==='cancel') { applyTheme(library[currentTreeId]?.theme || DEFAULT_THEME); return; } event.preventDefault(); library[currentTreeId].theme=readDesignForm(); savePeople(); $('#designDialog').close(); });
+$('#resetDesignBtn').addEventListener('click', () => fillDesignForm(DEFAULT_THEME));
 $('#importBtn').addEventListener('click', () => els.importInput.click());
 els.importInput.addEventListener('change', async () => {
   const file = els.importInput.files[0]; if (!file) return;

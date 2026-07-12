@@ -41,6 +41,7 @@
         <span aria-hidden="true">⌕</span>
         <input id="searchInput" type="search" placeholder="Find someone…" aria-label="Find someone" />
       </label>
+      <button id="designBtn" class="button secondary" type="button">Design</button>
       <button id="exportBtn" class="button secondary" type="button">Export</button>
       <button id="addPersonBtn" class="button primary" type="button"><span>＋</span> Add person</button>
     </nav>
@@ -66,6 +67,7 @@
         <p><span class="privacy-dot"></span> Saved privately on this device</p>
       </div>
       <div id="treeViewport" class="tree-viewport">
+        <div class="tree-backdrop" aria-hidden="true"><span class="tree-trunk"></span><span class="tree-branch branch-one"></span><span class="tree-branch branch-two"></span><span class="tree-branch branch-three"></span><span class="tree-branch branch-four"></span></div>
         <div id="treeCanvas" class="tree-canvas"></div>
         <div id="emptyState" class="empty-state" hidden>
           <div class="empty-icon">♧</div>
@@ -77,6 +79,20 @@
     </section>
   </main>
   </div>
+
+  <dialog id="designDialog" class="modal design-modal">
+    <form id="designForm" method="dialog">
+      <div class="modal-header"><div><p class="eyebrow">TREE APPEARANCE</p><h2>Design your tree</h2></div><button class="close-button" value="cancel" type="submit" aria-label="Close">×</button></div>
+      <div class="design-grid">
+        <label class="field full"><span>Background style</span><select id="designStyleInput"><option value="botanical">Botanical canopy</option><option value="classic">Classic parchment</option><option value="minimal">Minimal</option></select></label>
+        <label class="color-field"><span>Background</span><input id="backgroundColorInput" type="color" value="#faf9f3" /></label>
+        <label class="color-field"><span>Tree &amp; branches</span><input id="treeColorInput" type="color" value="#76927b" /></label>
+        <label class="color-field"><span>Accent</span><input id="accentColorInput" type="color" value="#d7a74c" /></label>
+      </div>
+      <div class="design-preview"><span></span><span></span><span></span><strong>Live preview</strong></div>
+      <div class="modal-actions"><button id="resetDesignBtn" class="button secondary" type="button">Reset design</button><span class="spacer"></span><button class="button secondary" value="cancel" type="submit">Cancel</button><button class="button primary" value="default" type="submit">Save design</button></div>
+    </form>
+  </dialog>
 
   <dialog id="newTreeDialog" class="modal">
     <form id="newTreeForm" method="dialog">

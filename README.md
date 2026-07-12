@@ -23,6 +23,7 @@ Then visit `http://localhost:8080`.
 - Connect up to two parents per person across unlimited generations
 - Record spouse or partner relationships and marriage dates
 - Add full, half, step, adopted, and general sibling connections
+- Customize each tree's botanical background, colors, and visual style
 - Automatic generation layout
 - Browser-local persistence
 - Portable JSON import and export
