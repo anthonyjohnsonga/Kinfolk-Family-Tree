@@ -16,7 +16,9 @@ jobs:
       DATABASE_URL: postgresql://kinfolk:test@localhost:5432/kinfolk
       POSTGRES_PASSWORD: ci_only_password
       KINFOLK_VERSION: ci
-      KINFOLK_DB_PATH: /tmp/kinfolk-postgres
+      KINFOLK_ROOT_PATH: /tmp/kinfolk
+      KINFOLK_NFS_ADDR: 192.0.2.10
+      KINFOLK_NFS_EXPORT: /exports/kinfolk-backups
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -44,6 +46,12 @@ jobs:
 
       - name: Validate production Compose configuration
         run: docker compose -f compose.production.yaml config --quiet
+
+      - name: Validate bind-storage and backup Compose layers
+        run: docker compose -f compose.yaml -f compose.storage-bind.yaml -f compose.backup.yaml config --quiet
+
+      - name: Validate NFS backup Compose layer
+        run: docker compose -f compose.yaml -f compose.backup.yaml -f compose.backup-nfs.yaml config --quiet
 
   containers:
     runs-on: ubuntu-latest

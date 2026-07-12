@@ -55,4 +55,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${KINFOLK_DB_PATH:?Set KINFOLK_DB_PATH to an existing absolute host directory}
+      device: ${KINFOLK_ROOT_PATH:?Set KINFOLK_ROOT_PATH}/database/postgres

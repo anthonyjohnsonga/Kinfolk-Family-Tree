@@ -45,25 +45,25 @@ Compose starts PostgreSQL, waits for it to become healthy, applies database migr
 Create the host directories and configuration location:
 
 ```bash
-sudo mkdir -p /srv/kinfolk/data/postgres /srv/kinfolk/backups /etc/kinfolk
-sudo chown 999:999 /srv/kinfolk/data/postgres
-sudo chown "$(id -u):$(id -g)" /srv/kinfolk/backups
-sudo cp deploy/kinfolk.env.example /etc/kinfolk/kinfolk.env
-sudo chown root:root /etc/kinfolk/kinfolk.env
-sudo chmod 600 /etc/kinfolk/kinfolk.env
-sudo nano /etc/kinfolk/kinfolk.env
+sudo mkdir -p /srv/kinfolk/database/postgres /srv/kinfolk/database/backups /srv/kinfolk/configure
+sudo chown 999:999 /srv/kinfolk/database/postgres
+sudo chown "$(id -u):$(id -g)" /srv/kinfolk/database/backups
+sudo cp deploy/kinfolk.env.example /srv/kinfolk/configure/kinfolk.env
+sudo chown root:root /srv/kinfolk/configure/kinfolk.env
+sudo chmod 600 /srv/kinfolk/configure/kinfolk.env
+sudo nano /srv/kinfolk/configure/kinfolk.env
 ```
 
 Set a real password, the desired release in `KINFOLK_VERSION`, and absolute storage paths. Start the release deployment:
 
 ```bash
 sudo docker compose \
-  --env-file /etc/kinfolk/kinfolk.env \
+  --env-file /srv/kinfolk/configure/kinfolk.env \
   -f compose.production.yaml \
   pull
 
 sudo docker compose \
-  --env-file /etc/kinfolk/kinfolk.env \
+  --env-file /srv/kinfolk/configure/kinfolk.env \
   -f compose.production.yaml \
   up -d
 ```
@@ -80,15 +80,15 @@ The migration container runs to completion before the API starts. `docker compos
 
 ### Pull-based updates
 
-Back up the database, edit `/etc/kinfolk/kinfolk.env` to the new release number, then run:
+Back up the database, edit `/srv/kinfolk/configure/kinfolk.env` to the new release number, then run:
 
 ```bash
-sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml pull
-sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml up -d
-sudo docker compose --env-file /etc/kinfolk/kinfolk.env -f compose.production.yaml ps -a
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml pull
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml up -d
+sudo docker compose --env-file /srv/kinfolk/configure/kinfolk.env -f compose.production.yaml ps -a
 ```
 
-Application containers are replaced while the database remains at `KINFOLK_DB_PATH` and configuration remains at the path supplied to `--env-file`.
+Application containers are replaced while PostgreSQL remains under `KINFOLK_ROOT_PATH/database/postgres` and configuration remains under `KINFOLK_ROOT_PATH/configure`.
 
 ### Production backups
 
@@ -96,13 +96,13 @@ Add the backup Compose layer while keeping the same external configuration:
 
 ```bash
 sudo docker compose \
-  --env-file /etc/kinfolk/kinfolk.env \
+  --env-file /srv/kinfolk/configure/kinfolk.env \
   -f compose.production.yaml \
   -f compose.backup.yaml \
   up -d
 ```
 
-`KINFOLK_BACKUP_PATH` may point to local storage or an SMB share already mounted on the host. Add `-f compose.backup-nfs.yaml` for the direct NFS backup volume.
+Backups are stored under `KINFOLK_ROOT_PATH/database/backups`. An SMB share may be mounted at that directory on the host. Add `-f compose.backup-nfs.yaml` for the direct NFS backup volume.
 
 ### Rollback
 
@@ -139,24 +139,24 @@ The default deployment uses the Docker-managed `kinfolk_db` volume. This remains
 
 ### Local host directory for PostgreSQL
 
-To place the live database in a specific local directory, set `KINFOLK_DB_PATH` in `.env`. The directory must be an existing absolute path on the Docker host and writable by the PostgreSQL container.
+To place all persistent Kinfolk files under a specific parent directory, set `KINFOLK_ROOT_PATH` in the environment file. The required subdirectories must exist on the Docker host, and the PostgreSQL directory must be writable by the container.
 
 On Linux:
 
 ```bash
-sudo mkdir -p /srv/kinfolk/database
-sudo chown 999:999 /srv/kinfolk/database
+sudo mkdir -p /srv/kinfolk/database/postgres /srv/kinfolk/database/backups /srv/kinfolk/configure
+sudo chown 999:999 /srv/kinfolk/database/postgres
 docker compose -f compose.yaml -f compose.storage-bind.yaml up --build -d
 ```
 
-Do not point `KINFOLK_DB_PATH` at an SMB share. For direct NFS database storage, follow PostgreSQL's NFS requirements, including a `hard` client mount and a synchronous server export. A local database with NAS-hosted backups is safer for most installations.
+Do not mount an SMB share at `database/postgres`. For direct NFS database storage, follow PostgreSQL's NFS requirements, including a `hard` client mount and a synchronous server export. A local database with NAS-hosted backups is safer for most installations.
 
 ## Automated backups
 
-Set `KINFOLK_BACKUP_PATH` to an existing local directory or a NAS share already mounted on the Docker host:
+Create the backup subdirectory locally or mount a NAS share at that location on the Docker host:
 
 ```bash
-sudo mkdir -p /srv/kinfolk/backups
+sudo mkdir -p /srv/kinfolk/database/backups
 docker compose -f compose.yaml -f compose.backup.yaml up --build -d
 ```
 
@@ -168,10 +168,10 @@ The backup service:
 - writes `.partial` files until a dump succeeds;
 - stores only completed files as `kinfolk-YYYYMMDDTHHMMSSZ.dump`.
 
-For SMB, mount the share on the host first and use that mounted directory as `KINFOLK_BACKUP_PATH`. For example, mount it at `/mnt/kinfolk-backups`, verify the Docker host can write to it, then set:
+For SMB, mount the share on the host directly at the Kinfolk backup subdirectory and verify the Docker host can write to it:
 
 ```text
-KINFOLK_BACKUP_PATH=/mnt/kinfolk-backups
+/srv/kinfolk/database/backups
 ```
 
 This keeps SMB credentials out of Compose and `.env`.

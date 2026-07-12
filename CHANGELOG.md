@@ -17,6 +17,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 - Pull-based production Compose deployment using versioned GHCR images.
 - Dedicated release image for applying database migrations.
 - External production configuration files and configurable database paths.
+- Unified persistent folder layout under one configurable Kinfolk root.
 
 ## [0.0.1] - 2026-07-12
 
