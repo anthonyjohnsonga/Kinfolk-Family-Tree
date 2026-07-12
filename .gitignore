@@ -7,3 +7,9 @@ family-tree-data/
 Thumbs.db
 .vscode/
 .idea/
+node_modules/
+dist/
+*.tsbuildinfo
+apps/api/src/generated/
+.env
+!.env.example

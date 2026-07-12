@@ -1,72 +1,82 @@
-# Kinfolk
+# Kinfolk Family Tree
 
-A private, local-first family tree builder that runs entirely in the browser. The repository contains no personal or sample family information.
+Kinfolk is a private, self-hosted family tree application. It uses a React and TypeScript frontend, a Fastify and TypeScript API, and PostgreSQL for persistent server-side storage.
 
-## Run it
+## Architecture
 
-Open `index.html` in a modern browser. No install or build step is required.
+- **Frontend:** React, TypeScript, and Vite, served by Nginx
+- **API:** Fastify and TypeScript
+- **Database:** PostgreSQL
+- **Database access:** Prisma ORM and tracked SQL migrations
+- **Deployment:** Docker Compose
 
-For a local development server, run:
+Family information is stored in PostgreSQL on the Docker host. The database is available only to services on the private Compose network and is not published as a host port.
 
-```powershell
-python -m http.server 8080
-```
+> The current foundation does not include user authentication yet. Deploy it only on a trusted internal network until authentication is added.
 
-Then visit `http://localhost:8080`.
+## Deploy with Docker Compose
 
-## Run with Docker Compose
+Docker with the Compose plugin is required.
 
-Docker Desktop or another Docker installation with Compose is required.
+1. Create the deployment environment file:
 
-Build and start Kinfolk:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-```powershell
-docker compose up --build -d
-```
+2. Edit `.env` and replace `POSTGRES_PASSWORD` with a long, unique password. The `.env` file is ignored by Git.
 
-Open <http://localhost:8080>. To use another host port, set `KINFOLK_PORT` before starting:
+3. Build and start the complete application:
 
-```powershell
-$env:KINFOLK_PORT = 3000
-docker compose up --build -d
-```
+   ```powershell
+   docker compose up --build -d
+   ```
 
-View status and logs:
+4. Open <http://localhost:8080>. Change `KINFOLK_PORT` in `.env` if port 8080 is unavailable.
+
+Compose starts PostgreSQL, waits for it to become healthy, applies database migrations, starts the API, and then starts the frontend.
+
+## Operations
+
+View service status and logs:
 
 ```powershell
 docker compose ps
-docker compose logs -f kinfolk
+docker compose logs -f
 ```
 
-Stop the application:
+Stop the application without deleting its database:
 
 ```powershell
 docker compose down
 ```
 
-Family trees remain in each visitor's browser storage; the container does not receive or persist that information.
+The `kinfolk_db` Docker volume stores the database. Do not use `docker compose down --volumes` unless you intend to permanently delete all stored trees.
 
-## Features
+## Local development
 
-- Home page for creating or reopening trees
-- Guided new-tree setup
-- Manage multiple trees on one device
-- Add, edit, search, and remove family members
-- Connect up to two parents per person across unlimited generations
-- Record spouse or partner relationships and marriage dates
-- Add full, half, step, adopted, and general sibling connections
-- Customize each tree's botanical background, colors, and visual style
-- Automatic generation layout
-- Browser-local persistence
-- Portable JSON import and export
-- Responsive interface
+Install dependencies:
 
-Each tree stays in the browser's `localStorage`. Use **Export** to create a portable `.kinfolk.json` backup and **Import a tree file** on the home page to open that backup on another device. Exported tree files are ignored by Git to help prevent test family information from being committed. Clearing browser site data removes locally saved trees.
+```powershell
+npm install
+```
 
-## GitHub Pages
+Start PostgreSQL through Compose, then run the API and web development servers in separate terminals:
 
-The project has no build step and can be published directly with GitHub Pages. In the repository settings, choose **Pages**, select **Deploy from a branch**, and publish the repository's root directory.
+```powershell
+npm run dev:api
+npm run dev:web
+```
 
-## Contributing
+The Vite server runs at <http://localhost:5173> and proxies API calls to port 3000.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the project's commit, privacy-check, and push process.
+## Current migration status
+
+The server-backed foundation currently supports creating, listing, and opening family trees and adding people. The PostgreSQL schema already includes parent, partnership, marriage, sibling, and per-tree theme relationships. The richer relationship editor and visual layout from the original browser-only prototype will be migrated onto these API models next.
+
+## Privacy
+
+- No personal family information or example records are committed.
+- `.env`, exported `*.kinfolk.json` files, and `family-tree-data/` are ignored by Git.
+- PostgreSQL is not exposed outside the Compose network.
+- Review [CONTRIBUTING.md](CONTRIBUTING.md) before every commit and push.

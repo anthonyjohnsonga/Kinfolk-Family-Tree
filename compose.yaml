@@ -1,10 +1,58 @@
 services:
-  kinfolk:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kinfolk}
+      POSTGRES_USER: ${POSTGRES_USER:-kinfolk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - kinfolk_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kinfolk} -d ${POSTGRES_DB:-kinfolk}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kinfolk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kinfolk}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kinfolk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kinfolk}
+      PORT: 3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    image: kinfolk-family-tree:local
-    container_name: kinfolk-family-tree
     ports:
       - "${KINFOLK_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  kinfolk_db:

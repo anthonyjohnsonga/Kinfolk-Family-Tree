@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model FamilyTree {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  backgroundStyle String   @default("botanical")
+  backgroundColor String   @default("#faf9f3")
+  treeColor       String   @default("#76927b")
+  accentColor     String   @default("#d7a74c")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  people          Person[]
+  parentRelations ParentRelationship[]
+  partnerships    Partnership[]
+  siblingRelations SiblingRelationship[]
+}
+
+model Person {
+  id                 String               @id @default(uuid()) @db.Uuid
+  treeId             String               @db.Uuid
+  tree               FamilyTree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  name               String
+  birthDate          DateTime?
+  deathDate          DateTime?
+  bio                String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  parentLinks        ParentRelationship[] @relation("Child")
+  childLinks         ParentRelationship[] @relation("Parent")
+  partnershipsA      Partnership[]        @relation("PartnerA")
+  partnershipsB      Partnership[]        @relation("PartnerB")
+  siblingLinksA      SiblingRelationship[] @relation("SiblingA")
+  siblingLinksB      SiblingRelationship[] @relation("SiblingB")
+
+  @@index([treeId])
+}
+
+model ParentRelationship {
+  id       String @id @default(uuid()) @db.Uuid
+  treeId   String @db.Uuid
+  tree     FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  parentId String @db.Uuid
+  childId  String @db.Uuid
+  type     String @default("biological")
+  parent   Person @relation("Parent", fields: [parentId], references: [id], onDelete: Cascade)
+  child    Person @relation("Child", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, childId])
+  @@index([treeId])
+}
+
+model Partnership {
+  id           String    @id @default(uuid()) @db.Uuid
+  treeId       String    @db.Uuid
+  tree         FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  partnerAId   String    @db.Uuid
+  partnerBId   String    @db.Uuid
+  status       String    @default("partnered")
+  marriageDate DateTime?
+  partnerA     Person    @relation("PartnerA", fields: [partnerAId], references: [id], onDelete: Cascade)
+  partnerB     Person    @relation("PartnerB", fields: [partnerBId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerAId, partnerBId])
+  @@index([treeId])
+}
+
+model SiblingRelationship {
+  id         String @id @default(uuid()) @db.Uuid
+  treeId     String @db.Uuid
+  tree       FamilyTree @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  siblingAId String @db.Uuid
+  siblingBId String @db.Uuid
+  type       String @default("sibling")
+  siblingA   Person @relation("SiblingA", fields: [siblingAId], references: [id], onDelete: Cascade)
+  siblingB   Person @relation("SiblingB", fields: [siblingBId], references: [id], onDelete: Cascade)
+
+  @@unique([siblingAId, siblingBId])
+  @@index([treeId])
+}

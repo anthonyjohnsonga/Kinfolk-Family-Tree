@@ -8,5 +8,7 @@ family-tree-data
 CONTRIBUTING.md
 README.md
 compose.yaml
-Dockerfile
-.dockerignore
+node_modules
+**/dist
+.env
+*.kinfolk.json

@@ -20,7 +20,7 @@ git config user.email
 
 ## Privacy check
 
-Family information entered in the application is stored in the browser's `localStorage`; it is not stored in the source files.
+Family information entered in the application is stored in the deployment's PostgreSQL database; it is not stored in the source files. Local database volumes, dumps, `.env` files, and exported trees must never be committed.
 
 Before every commit:
 
