@@ -1,7 +1,20 @@
-import Fastify, { type FastifyError } from 'fastify';
+import Fastify, { type FastifyError, type FastifyReply } from 'fastify';
+import cookie from '@fastify/cookie';
+import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
 import { db } from './db.js';
 
 const app = Fastify({ logger: true, bodyLimit: 1_000_000 });
+await app.register(cookie);
+const scrypt = promisify(scryptCallback);
+const SESSION_COOKIE='kinfolk_session';
+const SESSION_DAYS=Math.max(1,Number(process.env.SESSION_DAYS||7));
+const cookieOptions={path:'/',httpOnly:true,sameSite:'strict' as const,secure:process.env.COOKIE_SECURE==='true',maxAge:SESSION_DAYS*86400};
+const tokenHash=(token:string)=>createHash('sha256').update(token).digest('hex');
+async function hashPassword(password:string){const salt=randomBytes(16);const derived=await scrypt(password,salt,64) as Buffer;return `scrypt$${salt.toString('base64url')}$${derived.toString('base64url')}`}
+async function verifyPassword(password:string,encoded:string){const [algorithm,saltValue,hashValue]=encoded.split('$');if(algorithm!=='scrypt'||!saltValue||!hashValue)return false;const expected=Buffer.from(hashValue,'base64url'),actual=await scrypt(password,Buffer.from(saltValue,'base64url'),expected.length) as Buffer;return expected.length===actual.length&&timingSafeEqual(expected,actual)}
+async function createSession(userId:string,reply:FastifyReply){const token=randomBytes(32).toString('base64url'),expiresAt=new Date(Date.now()+SESSION_DAYS*86400000);await db.session.deleteMany({where:{expiresAt:{lt:new Date()}}});await db.session.create({data:{userId,tokenHash:tokenHash(token),expiresAt}});reply.setCookie(SESSION_COOKIE,token,cookieOptions)}
+async function currentUser(request:{cookies:Record<string,string|undefined>}){const token=request.cookies[SESSION_COOKIE];if(!token)return null;const session=await db.session.findUnique({where:{tokenHash:tokenHash(token)},include:{user:{select:{id:true,username:true,role:true}}}});if(!session||session.expiresAt<=new Date()){if(session)await db.session.delete({where:{id:session.id}});return null}return session.user}
 const date = (value?:string) => value ? new Date(`${value}T00:00:00Z`) : null;
 const ordered = (a:string,b:string) => a < b ? [a,b] : [b,a];
 const personBodySchema = {type:'object',additionalProperties:false,required:['name'],properties:{name:{type:'string',minLength:1,maxLength:80},birthDate:{type:'string',format:'date'},deathDate:{type:'string',format:'date'},bio:{type:'string',maxLength:2000},parentIds:{type:'array',maxItems:2,uniqueItems:true,items:{type:'string',format:'uuid'}},partnerId:{type:'string',format:'uuid'},marriageDate:{type:'string',format:'date'},partnershipStatus:{type:'string',enum:['partnered','married']},siblingId:{type:'string',format:'uuid'},siblingType:{type:'string',enum:['sibling','full','half','step','adopted']}}} as const;
@@ -35,6 +48,12 @@ async function syncRelationships(personId:string,treeId:string,body:PersonBody) 
 }
 
 app.get('/health',async()=>{await db.$queryRaw`SELECT 1`;return{status:'ok'}});
+app.get('/api/auth/status',async request=>{const [count,user]=await Promise.all([db.user.count(),currentUser(request)]);return{setupRequired:count===0,authenticated:Boolean(user),user}});
+app.post<{Body:{username:string;password:string}}>('/api/auth/setup',{schema:{body:{type:'object',additionalProperties:false,required:['username','password'],properties:{username:{type:'string',minLength:3,maxLength:40,pattern:'^[A-Za-z0-9._-]+$'},password:{type:'string',minLength:12,maxLength:128}}}}},async(request,reply)=>{if(await db.user.count())return reply.code(409).send({message:'Administrator setup has already been completed'});const user=await db.user.create({data:{username:request.body.username.toLowerCase(),passwordHash:await hashPassword(request.body.password)},select:{id:true,username:true,role:true}});await createSession(user.id,reply);return reply.code(201).send({user})});
+app.post<{Body:{username:string;password:string}}>('/api/auth/login',{schema:{body:{type:'object',additionalProperties:false,required:['username','password'],properties:{username:{type:'string',minLength:1,maxLength:40},password:{type:'string',minLength:1,maxLength:128}}}}},async(request,reply)=>{const user=await db.user.findUnique({where:{username:request.body.username.toLowerCase()}});const valid=user?await verifyPassword(request.body.password,user.passwordHash):(await hashPassword(request.body.password),false);if(!valid||!user)return reply.code(401).send({message:'Incorrect username or password'});await createSession(user.id,reply);return{user:{id:user.id,username:user.username,role:user.role}}});
+app.post('/api/auth/logout',async(request,reply)=>{const token=request.cookies[SESSION_COOKIE];if(token)await db.session.deleteMany({where:{tokenHash:tokenHash(token)}});reply.clearCookie(SESSION_COOKIE,{path:'/'});return reply.code(204).send()});
+app.addHook('onSend',async(request,reply,payload)=>{if(request.url.startsWith('/api/'))reply.header('Cache-Control','no-store');return payload});
+app.addHook('preHandler',async(request,reply)=>{if(!request.url.startsWith('/api/')||request.url.startsWith('/api/auth/'))return;const user=await currentUser(request);if(!user)return reply.code(401).send({message:'Authentication required'})});
 app.get('/api/trees',async()=>db.familyTree.findMany({orderBy:{updatedAt:'desc'},select:{id:true,name:true,createdAt:true,updatedAt:true,_count:{select:{people:true}}}}));
 app.post<{Body:{name:string;firstPerson?:{name:string;birthDate?:string}}}>('/api/trees',{schema:{body:{type:'object',additionalProperties:false,required:['name'],properties:{name:{type:'string',minLength:1,maxLength:80},firstPerson:{type:'object',additionalProperties:false,required:['name'],properties:{name:{type:'string',minLength:1,maxLength:80},birthDate:{type:'string',format:'date'}}}}}}},async(request,reply)=>reply.code(201).send(await db.familyTree.create({data:{name:request.body.name.trim(),people:request.body.firstPerson?{create:{name:request.body.firstPerson.name.trim(),birthDate:date(request.body.firstPerson.birthDate)}}:undefined},include:treeInclude})));
 app.get<{Params:{id:string}}>('/api/trees/:id',async(request,reply)=>{const tree=await db.familyTree.findUnique({where:{id:request.params.id},include:treeInclude});return tree||reply.code(404).send({message:'Tree not found'})});

@@ -12,6 +12,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "latest",
     "@prisma/client": "latest",
+    "@fastify/cookie": "latest",
     "dotenv": "latest",
     "fastify": "latest",
     "pg": "latest"

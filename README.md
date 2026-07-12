@@ -12,7 +12,7 @@ Kinfolk is a private, self-hosted family tree application. It uses a React and T
 
 Family information is stored in PostgreSQL on the Docker host. The database is available only to services on the private Compose network and is not published as a host port.
 
-> The current foundation does not include user authentication yet. Deploy it only on a trusted internal network until authentication is added.
+Kinfolk requires an administrator login. On the first visit, the application prompts you to create the initial administrator; after that, all family-tree API routes require an authenticated session.
 
 ## Deploy with Docker Compose
 
@@ -33,6 +33,8 @@ Docker with the Compose plugin is required.
    ```
 
 4. Open <http://localhost:8080>. Change `KINFOLK_PORT` in `.env` if port 8080 is unavailable.
+
+5. Create the first administrator account when prompted. Use a unique password of at least 12 characters and store it in a password manager. There is no password-recovery workflow yet.
 
 Compose starts PostgreSQL, waits for it to become healthy, applies database migrations, starts the API, and then starts the frontend.
 
@@ -154,10 +156,19 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 - Connect couples with partnership status and marriage dates
 - Add full, half, step, adopted, and general sibling relationships
 - Customize and persist each tree's style and colors
+- Protect all family data with first-run administrator setup and expiring server sessions
 
 ## Privacy
 
 - No personal family information or example records are committed.
 - `.env`, exported `*.kinfolk.json` files, and `family-tree-data/` are ignored by Git.
 - PostgreSQL is not exposed outside the Compose network.
+- Passwords use salted `scrypt` hashes; raw passwords and session tokens are never stored in the database.
+- Authentication uses HTTP-only, SameSite Strict cookies backed by hashed, expiring server sessions.
 - Review [CONTRIBUTING.md](CONTRIBUTING.md) before every commit and push.
+
+## Authentication settings
+
+`SESSION_DAYS` controls session lifetime and defaults to seven days. `COOKIE_SECURE` must remain `false` for plain internal HTTP. Set it to `true` when Kinfolk is served through HTTPS; secure cookies are not transmitted over plain HTTP.
+
+Authentication protects access to the application, but HTTPS is still required before exposing Kinfolk outside a trusted internal network.
