@@ -12,6 +12,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 ### Added
 
 - Store and display an optional maiden or birth surname for each person.
+- Switch between existing trees or start a new tree from the signed-in toolbar.
 
 ## [0.0.2] - 2026-07-12
 
