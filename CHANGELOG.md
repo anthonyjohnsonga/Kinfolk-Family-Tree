@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+No changes yet.
+
+## [0.0.3] - 2026-07-13
+
 ### Fixed
 
 - Draw a single joined child connector for two-parent relationships instead of overlapping paths.
@@ -13,6 +17,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 - Store and display an optional maiden or birth surname for each person.
 - Switch between existing trees or start a new tree from the signed-in toolbar.
+
+### Documentation
+
+- Add a standalone, pull-based Docker Compose installation and upgrade guide.
 
 ## [0.0.2] - 2026-07-12
 
