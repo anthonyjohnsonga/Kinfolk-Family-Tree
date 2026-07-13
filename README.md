@@ -38,6 +38,180 @@ Docker with the Compose plugin is required.
 
 Compose starts PostgreSQL, waits for it to become healthy, applies database migrations, starts the API, and then starts the frontend.
 
+## Standalone server deployment with release images
+
+This is the recommended approach for a server that should pull published Kinfolk images instead of cloning or building the application source. The example below keeps the Compose file, private environment file, PostgreSQL data, and backup directory under the sample root `/opt/kinfolk`. Replace that path everywhere if you prefer another absolute directory.
+
+The final layout is:
+
+```text
+/opt/kinfolk/
+├── compose.yaml
+├── .env
+└── database/
+    ├── postgres/
+    └── backups/
+```
+
+### 1. Create the directories
+
+```bash
+sudo mkdir -p /opt/kinfolk/database/postgres /opt/kinfolk/database/backups
+sudo chown "$(id -u):$(id -g)" /opt/kinfolk /opt/kinfolk/database /opt/kinfolk/database/backups
+sudo chown 999:999 /opt/kinfolk/database/postgres
+cd /opt/kinfolk
+```
+
+PostgreSQL runs as user ID `999` in the published container, so its host data directory must be writable by that user. Keep `database/postgres` on reliable local storage. A mounted NAS share is better suited to `database/backups` than to the live PostgreSQL directory.
+
+### 2. Create `compose.yaml`
+
+Place this file at `/opt/kinfolk/compose.yaml`:
+
+```yaml
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /opt/kinfolk/database/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    image: ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:${KINFOLK_VERSION}
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:${KINFOLK_VERSION}
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PORT: 3000
+      SESSION_DAYS: ${SESSION_DAYS}
+      COOKIE_SECURE: ${COOKIE_SECURE}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:${KINFOLK_VERSION}
+    ports:
+      - "3040:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+```
+
+If you use a root other than `/opt/kinfolk`, update the database volume's host path. Change `3040` only if you want to expose Kinfolk on a different host port.
+
+### 3. Create `.env`
+
+Place `.env` beside `compose.yaml` at `/opt/kinfolk/.env`. Compose loads it automatically when commands are run from this directory.
+
+Generate a URL-safe database password:
+
+```bash
+openssl rand -hex 32
+```
+
+Create `.env`, replacing the example password with the generated value:
+
+```dotenv
+KINFOLK_VERSION=0.0.2
+
+POSTGRES_DB=kinfolk
+POSTGRES_USER=kinfolk
+POSTGRES_PASSWORD=replace_with_the_generated_password
+
+SESSION_DAYS=7
+COOKIE_SECURE=false
+```
+
+Do not commit `.env`. Protect it so only its owner can read it:
+
+```bash
+chmod 600 /opt/kinfolk/.env
+```
+
+Use a hexadecimal password as shown above. Characters with special meaning in a database URL can break `DATABASE_URL` unless they are percent-encoded. Keep `COOKIE_SECURE=false` for plain internal HTTP; set it to `true` when Kinfolk is served through HTTPS.
+
+### 4. Pull and start Kinfolk
+
+```bash
+cd /opt/kinfolk
+docker compose config --quiet
+docker compose pull
+docker compose up -d
+docker compose ps -a
+```
+
+Open `http://SERVER-IP:3040` and create the first administrator when prompted. A healthy deployment shows `db`, `api`, and `frontend` running or healthy. The `migrate` service should show `Exited (0)` after it successfully applies the database migrations; it is not intended to remain running.
+
+View logs when troubleshooting:
+
+```bash
+docker compose logs --tail=200
+```
+
+### Upgrade to a newer release
+
+Back up the database before every upgrade. At minimum, create a PostgreSQL dump in the persistent backup directory:
+
+```bash
+cd /opt/kinfolk
+docker compose exec -T db sh -c \
+  'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+  > database/backups/before-upgrade.dump
+ls -lh database/backups/before-upgrade.dump
+```
+
+Confirm the dump is non-empty. Then edit `/opt/kinfolk/.env` and change only `KINFOLK_VERSION` to the desired published version, for example:
+
+```dotenv
+KINFOLK_VERSION=0.0.3
+```
+
+Pull and apply the update:
+
+```bash
+cd /opt/kinfolk
+docker compose config --quiet
+docker compose pull
+docker compose up -d
+docker compose ps -a
+```
+
+Compose replaces the application containers, preserves PostgreSQL under `/opt/kinfolk/database/postgres`, and runs the release's migrations before starting the API. Verify login and family-tree data after the upgrade.
+
+To roll back application images, restore the previous `KINFOLK_VERSION` and run `docker compose pull` followed by `docker compose up -d`. Database migrations are not automatically reversed, so restore the pre-upgrade database dump if the newer release introduced an incompatible migration.
+
+To stop Kinfolk without deleting its data:
+
+```bash
+docker compose down
+```
+
+Do not add `--volumes` and do not delete `/opt/kinfolk/database/postgres` unless you intentionally want to erase every stored family tree and account.
+
 ## Production deployment from release images
 
 `compose.production.yaml` pulls versioned application images from GitHub Container Registry instead of building source on the server. It also requires explicit host storage and allows the configuration file to live outside the repository.
