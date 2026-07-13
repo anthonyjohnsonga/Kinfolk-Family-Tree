@@ -5,3 +5,11 @@
 .person-card small + small {
   margin-top: 4px;
 }
+
+.person-card em {
+  display: block;
+  margin-top: 3px;
+  color: #68786f;
+  font-size: 11px;
+  font-style: normal;
+}

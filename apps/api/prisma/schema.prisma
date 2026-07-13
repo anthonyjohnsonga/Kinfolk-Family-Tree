@@ -49,6 +49,7 @@ model Person {
   treeId             String               @db.Uuid
   tree               FamilyTree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
   name               String
+  maidenName         String?
   birthDate          DateTime?
   deathDate          DateTime?
   bio                String?

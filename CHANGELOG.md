@@ -9,6 +9,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 - Draw a single joined child connector for two-parent relationships instead of overlapping paths.
 - Show saved sibling relationships in the tree and keep connected siblings on the same generation.
 
+### Added
+
+- Store and display an optional maiden or birth surname for each person.
+
 ## [0.0.2] - 2026-07-12
 
 ### Fixed
