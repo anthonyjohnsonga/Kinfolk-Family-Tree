@@ -1,0 +1,7 @@
+.generation:not(:last-child)::after {
+  display: none;
+}
+
+.person-card small + small {
+  margin-top: 4px;
+}
