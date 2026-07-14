@@ -1,6 +1,6 @@
 import { db } from './db.js';
 import { date, ordered } from './utils.js';
-import type { PersonBody } from './schemas.js';
+import type { PersonBody } from './contract.js';
 
 async function assertMembers(treeId: string, ids: string[]) {
   const unique = [...new Set(ids.filter(Boolean))];

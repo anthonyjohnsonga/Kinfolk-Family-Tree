@@ -1,47 +1,14 @@
-export type ParentLink = { parentId: string; childId: string; type: string };
-export type Partnership = {
-  partnerAId: string;
-  partnerBId: string;
-  status: string;
-  marriageDate: string | null;
-};
-export type SiblingLink = { siblingAId: string; siblingBId: string; type: string };
+// The API defines the shared contract; only UI-local shapes live here.
+// Import types only — the web bundle must not pull in API runtime code.
+export type {
+  AuthStatus,
+  LifeEvent,
+  ParentLink,
+  Partnership,
+  Person,
+  SiblingLink,
+  Tree,
+  TreeSummary,
+} from '@kinfolk/api/contract';
+
 export type SiblingDraft = { personId: string; type: string };
-export type LifeEvent = {
-  id?: string;
-  type: string;
-  date: string | null;
-  place: string | null;
-  description: string | null;
-};
-export type Person = {
-  id: string;
-  name: string;
-  maidenName: string | null;
-  birthDate: string | null;
-  birthPlace: string | null;
-  deathDate: string | null;
-  deathPlace: string | null;
-  bio: string | null;
-  parentLinks: ParentLink[];
-  partnershipsA: Partnership[];
-  partnershipsB: Partnership[];
-  siblingLinksA: SiblingLink[];
-  siblingLinksB: SiblingLink[];
-  lifeEvents: LifeEvent[];
-};
-export type Tree = {
-  id: string;
-  name: string;
-  backgroundStyle: string;
-  backgroundColor: string;
-  treeColor: string;
-  accentColor: string;
-  people: Person[];
-};
-export type TreeSummary = { id: string; name: string; _count: { people: number } };
-export type AuthStatus = {
-  setupRequired: boolean;
-  authenticated: boolean;
-  user: { id: string; username: string; role: string } | null;
-};

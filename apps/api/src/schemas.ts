@@ -1,23 +1,5 @@
-export const siblingTypes = ['sibling', 'full', 'half', 'step', 'adopted'] as const;
-export type SiblingType = (typeof siblingTypes)[number];
-export const lifeEventTypes = [
-  'residence',
-  'marriage',
-  'divorce',
-  'burial',
-  'immigration',
-  'education',
-  'military',
-  'occupation',
-  'other',
-] as const;
-export type LifeEventType = (typeof lifeEventTypes)[number];
-export type LifeEventInput = {
-  type: LifeEventType;
-  date?: string;
-  place?: string;
-  description?: string;
-};
+import { lifeEventTypes, siblingTypes } from './contract.js';
+
 export const personBodySchema = {
   type: 'object',
   additionalProperties: false,
@@ -71,20 +53,3 @@ export const personBodySchema = {
     siblingType: { type: 'string', enum: siblingTypes },
   },
 } as const;
-export type PersonBody = {
-  name: string;
-  maidenName?: string;
-  birthDate?: string;
-  birthPlace?: string;
-  deathDate?: string;
-  deathPlace?: string;
-  bio?: string;
-  parentIds?: string[];
-  partnerId?: string;
-  marriageDate?: string;
-  partnershipStatus?: string;
-  siblings?: { personId: string; type: SiblingType }[];
-  lifeEvents?: LifeEventInput[];
-  siblingId?: string;
-  siblingType?: SiblingType;
-};

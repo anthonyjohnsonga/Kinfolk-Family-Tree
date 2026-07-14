@@ -2,7 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
 import { date } from './utils.js';
 import { treeInclude } from './queries.js';
-import { personBodySchema, type PersonBody } from './schemas.js';
+import type { PersonBody } from './contract.js';
+import { personBodySchema } from './schemas.js';
 import { syncLifeEvents, syncRelationships } from './relationships.js';
 
 export function registerPeopleRoutes(app: FastifyInstance) {
