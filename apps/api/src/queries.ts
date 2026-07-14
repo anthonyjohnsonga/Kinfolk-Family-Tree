@@ -1,0 +1,1 @@
+export const treeInclude={people:{orderBy:{createdAt:'asc' as const},include:{parentLinks:true,partnershipsA:true,partnershipsB:true,siblingLinksA:true,siblingLinksB:true,lifeEvents:{orderBy:{date:'asc' as const}}}}};

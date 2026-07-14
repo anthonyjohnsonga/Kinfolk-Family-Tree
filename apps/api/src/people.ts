@@ -1,0 +1,12 @@
+import type { FastifyInstance } from 'fastify';
+import { db } from './db.js';
+import { date } from './utils.js';
+import { treeInclude } from './queries.js';
+import { personBodySchema, type PersonBody } from './schemas.js';
+import { syncLifeEvents, syncRelationships } from './relationships.js';
+
+export function registerPeopleRoutes(app:FastifyInstance){
+ app.post<{Params:{treeId:string};Body:PersonBody}>('/api/trees/:treeId/people',{schema:{body:personBodySchema}},async(request,reply)=>{const tree=await db.familyTree.findUnique({where:{id:request.params.treeId},select:{id:true}});if(!tree)return reply.code(404).send({message:'Tree not found'});const person=await db.person.create({data:{treeId:tree.id,name:request.body.name.trim(),maidenName:request.body.maidenName?.trim()||null,birthDate:date(request.body.birthDate),birthPlace:request.body.birthPlace?.trim()||null,deathDate:date(request.body.deathDate),deathPlace:request.body.deathPlace?.trim()||null,bio:request.body.bio?.trim()}});await syncRelationships(person.id,tree.id,request.body);await syncLifeEvents(person.id,request.body);await db.familyTree.update({where:{id:tree.id},data:{updatedAt:new Date()}});return reply.code(201).send(await db.familyTree.findUnique({where:{id:tree.id},include:treeInclude}))});
+ app.patch<{Params:{id:string};Body:PersonBody}>('/api/people/:id',{schema:{body:personBodySchema}},async(request,reply)=>{const existing=await db.person.findUnique({where:{id:request.params.id}});if(!existing)return reply.code(404).send({message:'Person not found'});await db.person.update({where:{id:existing.id},data:{name:request.body.name.trim(),maidenName:request.body.maidenName?.trim()||null,birthDate:date(request.body.birthDate),birthPlace:request.body.birthPlace?.trim()||null,deathDate:date(request.body.deathDate),deathPlace:request.body.deathPlace?.trim()||null,bio:request.body.bio?.trim()}});await syncRelationships(existing.id,existing.treeId,request.body);await syncLifeEvents(existing.id,request.body);await db.familyTree.update({where:{id:existing.treeId},data:{updatedAt:new Date()}});return db.familyTree.findUnique({where:{id:existing.treeId},include:treeInclude})});
+ app.delete<{Params:{id:string}}>('/api/people/:id',async(request,reply)=>{const existing=await db.person.findUnique({where:{id:request.params.id}});if(!existing)return reply.code(404).send({message:'Person not found'});await db.person.delete({where:{id:existing.id}});await db.familyTree.update({where:{id:existing.treeId},data:{updatedAt:new Date()}});return reply.code(204).send()});
+}

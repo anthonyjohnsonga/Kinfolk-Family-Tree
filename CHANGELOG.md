@@ -4,7 +4,9 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
-No changes yet.
+### Changed
+
+- Split the API server and React application entry points into focused route, component, type, query, schema, formatting, and utility modules to make the codebase easier to review and maintain without changing user-facing behavior.
 
 ## [0.0.4] - 2026-07-13
 
