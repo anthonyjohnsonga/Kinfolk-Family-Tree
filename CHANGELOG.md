@@ -10,6 +10,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 - Manage multiple sibling connections, including changing relationship types and removing individual siblings.
 - Keep marriage status and saved marriage dates visible on couple connections at every screen size.
 
+### Added
+
+- Add person detail views with birth/death locations and a structured life-event timeline.
+
 ## [0.0.3] - 2026-07-13
 
 ### Fixed

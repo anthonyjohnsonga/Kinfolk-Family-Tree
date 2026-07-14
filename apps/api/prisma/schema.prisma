@@ -51,7 +51,9 @@ model Person {
   name               String
   maidenName         String?
   birthDate          DateTime?
+  birthPlace         String?
   deathDate          DateTime?
+  deathPlace         String?
   bio                String?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -61,8 +63,24 @@ model Person {
   partnershipsB      Partnership[]        @relation("PartnerB")
   siblingLinksA      SiblingRelationship[] @relation("SiblingA")
   siblingLinksB      SiblingRelationship[] @relation("SiblingB")
+  lifeEvents         LifeEvent[]
 
   @@index([treeId])
+}
+
+model LifeEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  personId    String   @db.Uuid
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  type        String
+  date        DateTime?
+  place       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([personId])
+  @@index([date])
 }
 
 model ParentRelationship {

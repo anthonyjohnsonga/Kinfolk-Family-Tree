@@ -449,6 +449,7 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 
 - Create, list, and open server-stored family trees
 - Add, edit, and delete people
+- View person details and record birth/death places and structured life events
 - Connect up to two parents and render multiple generations
 - Connect couples with partnership status and marriage dates
 - Add full, half, step, adopted, and general sibling relationships

@@ -118,6 +118,156 @@
   font-size: 9px;
 }
 
+.event-manager {
+  display: grid;
+  gap: 10px;
+}
+
+.event-edit-list {
+  display: grid;
+  gap: 12px;
+}
+
+.event-edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e1e5de;
+  border-radius: 12px;
+  background: #f8faf6;
+}
+
+.event-edit-row legend {
+  padding: 0 6px;
+  color: #2d654d;
+  font: 600 14px Georgia, serif;
+}
+
+.event-edit-row .event-place,
+.event-edit-row .event-description {
+  grid-column: 1 / -1;
+}
+
+.event-edit-row > button {
+  grid-column: 2;
+  justify-self: end;
+}
+
+.event-add {
+  justify-self: start;
+}
+
+.person-details {
+  width: min(720px, 100%);
+}
+
+.person-details header p {
+  margin: 3px 0 0;
+  color: #68786f;
+}
+
+.detail-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detail-facts > div {
+  padding: 14px;
+  border-radius: 12px;
+  background: #eff4ec;
+}
+
+.detail-facts span {
+  display: block;
+  margin-bottom: 4px;
+  color: #68786f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.detail-facts p,
+.detail-section p {
+  margin: 4px 0 0;
+  color: #68786f;
+}
+
+.detail-section {
+  margin-top: 20px;
+}
+
+.detail-section h3 {
+  margin: 0 0 10px;
+  font: 600 18px Georgia, serif;
+}
+
+.detail-section dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 7px 12px;
+  margin: 0;
+}
+
+.detail-section dt {
+  color: #68786f;
+  font-weight: 700;
+}
+
+.detail-section dd {
+  margin: 0;
+}
+
+.life-timeline {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.life-timeline::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 104px;
+  border-left: 2px solid #d7ddd4;
+}
+
+.life-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 28px;
+}
+
+.life-timeline li::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 99px;
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--tree-bg, #fffdf8);
+  border-radius: 50%;
+  background: #2d654d;
+}
+
+.life-timeline time {
+  color: #68786f;
+  font-size: 11px;
+  text-align: right;
+}
+
+.life-timeline strong {
+  color: #183128;
+}
+
 @media (max-width: 900px) {
   .topbar {
     height: auto;
@@ -143,5 +293,28 @@
     width: 72px;
     flex-basis: 72px;
     font-size: 9px;
+  }
+
+  .event-edit-row,
+  .detail-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .event-edit-row > button,
+  .event-edit-row .event-place,
+  .event-edit-row .event-description {
+    grid-column: 1;
+  }
+
+  .life-timeline::before {
+    left: 72px;
+  }
+
+  .life-timeline li {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .life-timeline li::before {
+    left: 67px;
   }
 }
