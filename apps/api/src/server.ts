@@ -17,8 +17,10 @@ async function createSession(userId:string,reply:FastifyReply){const token=rando
 async function currentUser(request:{cookies:Record<string,string|undefined>}){const token=request.cookies[SESSION_COOKIE];if(!token)return null;const session=await db.session.findUnique({where:{tokenHash:tokenHash(token)},include:{user:{select:{id:true,username:true,role:true}}}});if(!session||session.expiresAt<=new Date()){if(session)await db.session.delete({where:{id:session.id}});return null}return session.user}
 const date = (value?:string) => value ? new Date(`${value}T00:00:00Z`) : null;
 const ordered = (a:string,b:string) => a < b ? [a,b] : [b,a];
-const personBodySchema = {type:'object',additionalProperties:false,required:['name'],properties:{name:{type:'string',minLength:1,maxLength:80},maidenName:{type:'string',maxLength:80},birthDate:{type:'string',format:'date'},deathDate:{type:'string',format:'date'},bio:{type:'string',maxLength:2000},parentIds:{type:'array',maxItems:2,uniqueItems:true,items:{type:'string',format:'uuid'}},partnerId:{type:'string',format:'uuid'},marriageDate:{type:'string',format:'date'},partnershipStatus:{type:'string',enum:['partnered','married']},siblingId:{type:'string',format:'uuid'},siblingType:{type:'string',enum:['sibling','full','half','step','adopted']}}} as const;
-type PersonBody={name:string;maidenName?:string;birthDate?:string;deathDate?:string;bio?:string;parentIds?:string[];partnerId?:string;marriageDate?:string;partnershipStatus?:string;siblingId?:string;siblingType?:string};
+const siblingTypes=['sibling','full','half','step','adopted'] as const;
+type SiblingType=(typeof siblingTypes)[number];
+const personBodySchema = {type:'object',additionalProperties:false,required:['name'],properties:{name:{type:'string',minLength:1,maxLength:80},maidenName:{type:'string',maxLength:80},birthDate:{type:'string',format:'date'},deathDate:{type:'string',format:'date'},bio:{type:'string',maxLength:2000},parentIds:{type:'array',maxItems:2,uniqueItems:true,items:{type:'string',format:'uuid'}},partnerId:{type:'string',format:'uuid'},marriageDate:{type:'string',format:'date'},partnershipStatus:{type:'string',enum:['partnered','married']},siblings:{type:'array',maxItems:100,items:{type:'object',additionalProperties:false,required:['personId','type'],properties:{personId:{type:'string',format:'uuid'},type:{type:'string',enum:siblingTypes}}}},siblingId:{type:'string',format:'uuid'},siblingType:{type:'string',enum:siblingTypes}}} as const;
+type PersonBody={name:string;maidenName?:string;birthDate?:string;deathDate?:string;bio?:string;parentIds?:string[];partnerId?:string;marriageDate?:string;partnershipStatus?:string;siblings?:{personId:string;type:SiblingType}[];siblingId?:string;siblingType?:SiblingType};
 
 const treeInclude={people:{orderBy:{createdAt:'asc' as const},include:{parentLinks:true,partnershipsA:true,partnershipsB:true,siblingLinksA:true,siblingLinksB:true}}};
 
@@ -29,7 +31,9 @@ async function assertMembers(treeId:string, ids:string[]) {
 }
 
 async function syncRelationships(personId:string,treeId:string,body:PersonBody) {
-  const relationIds=[...(body.parentIds||[]),body.partnerId||'',body.siblingId||''];
+  const siblingIds=body.siblings?.map(sibling=>sibling.personId)||[];
+  if(new Set(siblingIds).size!==siblingIds.length) throw Object.assign(new Error('Each sibling can be selected only once'),{statusCode:400});
+  const relationIds=[...(body.parentIds||[]),body.partnerId||'',...siblingIds,body.siblingId||''];
   if(relationIds.includes(personId)) throw Object.assign(new Error('A person cannot be related to themselves'),{statusCode:400});
   await assertMembers(treeId,relationIds);
   await db.$transaction(async tx=>{
@@ -40,7 +44,10 @@ async function syncRelationships(personId:string,treeId:string,body:PersonBody) 
       const [partnerAId,partnerBId]=ordered(personId,body.partnerId);
       await tx.partnership.upsert({where:{partnerAId_partnerBId:{partnerAId,partnerBId}},create:{treeId,partnerAId,partnerBId,status:body.partnershipStatus||'partnered',marriageDate:date(body.marriageDate)},update:{status:body.partnershipStatus||'partnered',marriageDate:date(body.marriageDate)}});
     }
-    if(body.siblingId){
+    if(body.siblings){
+      await tx.siblingRelationship.deleteMany({where:{OR:[{siblingAId:personId},{siblingBId:personId}]}});
+      if(body.siblings.length) await tx.siblingRelationship.createMany({data:body.siblings.map(sibling=>{const [siblingAId,siblingBId]=ordered(personId,sibling.personId);return{treeId,siblingAId,siblingBId,type:sibling.type}})});
+    } else if(body.siblingId){
       const [siblingAId,siblingBId]=ordered(personId,body.siblingId);
       await tx.siblingRelationship.upsert({where:{siblingAId_siblingBId:{siblingAId,siblingBId}},create:{treeId,siblingAId,siblingBId,type:body.siblingType||'sibling'},update:{type:body.siblingType||'sibling'}});
     }
