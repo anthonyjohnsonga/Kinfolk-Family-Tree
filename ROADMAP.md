@@ -1,0 +1,20 @@
+# Kinfolk Roadmap
+
+This roadmap records the planned feature sequence for Kinfolk. Completed work may remain on `main` until it is included in a tagged release.
+
+| # | Feature | Status | Notes |
+|---:|---|---|---|
+| 1 | Complete relationship management | Complete (`v0.0.4`) | Add, edit, and remove multiple typed sibling relationships. |
+| 2 | Person details, life events, and locations | Complete (`v0.0.4`) | Person detail view, birth/death places, and structured timelines. |
+| 3 | Sources, citations, photographs, and documents | Planned | Attach evidence and server-stored media to people and facts. |
+| 4 | GEDCOM import and export | Planned | Use an open genealogy interchange format to avoid data lock-in. |
+| 5 | Explicit links between related family trees | Planned | Link people and trees deliberately instead of matching surnames automatically. |
+| 6 | Multiple users, permissions, and audit history | Planned | Add administrators, editors, read-only access, and change history. |
+
+## Design principles
+
+- Keep family data private and stored on the user's server.
+- Preserve existing data through tracked, forward-only database migrations.
+- Prefer explicit relationships over inferred surname matches.
+- Keep deployment versioned and reproducible through Docker Compose.
+- Add import/export before the internal model becomes difficult to exchange with other genealogy tools.

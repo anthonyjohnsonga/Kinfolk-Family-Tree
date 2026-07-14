@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+No changes yet.
+
+## [0.0.4] - 2026-07-13
+
 ### Fixed
 
 - Group children by their parent set and draw one shared family connector, preventing stacked lines for siblings.
@@ -13,6 +17,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 ### Added
 
 - Add person detail views with birth/death locations and a structured life-event timeline.
+
+### Documentation
+
+- Add a persistent feature roadmap and an automated release preflight command.
 
 ## [0.0.3] - 2026-07-13
 

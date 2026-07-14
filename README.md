@@ -473,4 +473,4 @@ Authentication protects access to the application, but HTTPS is still required b
 
 ## Releases
 
-See [RELEASE.md](RELEASE.md) for the release-candidate gates and tagging process and [CHANGELOG.md](CHANGELOG.md) for notable changes. Git tags publish versioned frontend and API images to GitHub Container Registry and create a GitHub release automatically.
+See [ROADMAP.md](ROADMAP.md) for planned features, [RELEASE.md](RELEASE.md) for release gates and tagging, and [CHANGELOG.md](CHANGELOG.md) for notable changes. Git tags publish versioned frontend, API, and migration images to GitHub Container Registry and create a GitHub release automatically.

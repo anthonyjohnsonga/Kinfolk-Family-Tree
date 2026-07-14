@@ -1,6 +1,6 @@
 # Release Process
 
-The current stable release is `v0.0.1`. Do not create a new stable tag until every required release gate below passes on a clean Docker host.
+The current stable release is `v0.0.3`. Do not create a new stable tag until every required release gate below passes on a clean Docker host.
 
 ## Release gates
 
@@ -30,32 +30,35 @@ After every gate passes:
 ```bash
 git switch main
 git pull --ff-only origin main
-VERSION=v0.0.2
-git tag -a "$VERSION" -m "Kinfolk $VERSION"
+VERSION=v0.0.4
+npm run release:check -- "$VERSION"
+git tag -a "$VERSION" -m "Kinfolk Family Tree $VERSION"
 git push origin "$VERSION"
 ```
 
-Pushing the tag triggers `.github/workflows/release.yaml`. It publishes:
+The preflight command verifies the repository-local author identity, clean and synchronized `main`, changelog version, unused tag, and successful CI for the exact release commit. It prints the final tagging commands but never publishes automatically.
+
+Pushing the tag triggers `.github/workflows/release.yaml`. It publishes in parallel:
 
 - `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:<version>`
 - `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:<version>`
 - `ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:<version>`
 - a GitHub release with generated notes;
-- provenance attestations for both container images.
+- provenance attestations for all three container images.
 
 ## Verify published artifacts
 
 ```bash
 gh attestation verify \
-  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:0.0.2 \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-web:0.0.4 \
   -R anthonyjohnsonga/Kinfolk-Family-Tree
 
 gh attestation verify \
-  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:0.0.2 \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-api:0.0.4 \
   -R anthonyjohnsonga/Kinfolk-Family-Tree
 
 gh attestation verify \
-  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:0.0.2 \
+  oci://ghcr.io/anthonyjohnsonga/kinfolk-family-tree-migrate:0.0.4 \
   -R anthonyjohnsonga/Kinfolk-Family-Tree
 ```
 

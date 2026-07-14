@@ -6,6 +6,7 @@
     "build": "npm run build -w @kinfolk/api && npm run build -w @kinfolk/web",
     "dev:api": "npm run dev -w @kinfolk/api",
     "dev:web": "npm run dev -w @kinfolk/web",
+    "release:check": "node scripts/release-check.mjs",
     "typecheck": "npm run typecheck -w @kinfolk/api && npm run typecheck -w @kinfolk/web"
   },
   "engines": {"node": ">=22"}
