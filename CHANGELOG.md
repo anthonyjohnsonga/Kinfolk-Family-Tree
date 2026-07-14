@@ -4,7 +4,9 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
-No changes yet.
+### Fixed
+
+- Group children by their parent set and draw one shared family connector, preventing stacked lines for siblings.
 
 ## [0.0.3] - 2026-07-13
 
