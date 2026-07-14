@@ -1,13 +1,22 @@
 {
   "name": "kinfolk-family-tree",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "build": "npm run build -w @kinfolk/api && npm run build -w @kinfolk/web",
     "dev:api": "npm run dev -w @kinfolk/api",
     "dev:web": "npm run dev -w @kinfolk/web",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx}\"",
     "release:check": "node scripts/release-check.mjs",
     "typecheck": "npm run typecheck -w @kinfolk/api && npm run typecheck -w @kinfolk/web"
   },
-  "engines": {"node": ">=22"}
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "prettier": "3.9.5"
+  }
 }

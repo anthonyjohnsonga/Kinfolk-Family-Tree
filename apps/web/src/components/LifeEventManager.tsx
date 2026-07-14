@@ -1,8 +1,98 @@
 import type { LifeEvent } from '../types';
 
-const lifeEventTypeOptions=[['residence','Residence'],['marriage','Marriage'],['divorce','Divorce'],['burial','Burial'],['immigration','Immigration'],['education','Education'],['military','Military service'],['occupation','Occupation'],['other','Other']];
-export const eventLabel=(type:string)=>lifeEventTypeOptions.find(([id])=>id===type)?.[1]||'Life event';
-export function LifeEventManager({value,onChange}:{value:LifeEvent[];onChange:(value:LifeEvent[])=>void}){
- function update(index:number,change:Partial<LifeEvent>){onChange(value.map((event,eventIndex)=>eventIndex===index?{...event,...change}:event))}
- return <section className="event-manager full"><h3>Life events</h3>{value.length?<div className="event-edit-list">{value.map((event,index)=><fieldset className="event-edit-row" key={event.id||index}><legend>{eventLabel(event.type)}</legend><label>Event type<select value={event.type} onChange={change=>update(index,{type:change.target.value})}>{lifeEventTypeOptions.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><label>Date<input type="date" value={event.date||''} onChange={change=>update(index,{date:change.target.value||null})}/></label><label className="event-place">Place<input maxLength={160} value={event.place||''} onChange={change=>update(index,{place:change.target.value||null})}/></label><label className="event-description">Notes<textarea rows={2} maxLength={1000} value={event.description||''} onChange={change=>update(index,{description:change.target.value||null})}/></label><button type="button" className="danger" onClick={()=>onChange(value.filter((_,eventIndex)=>eventIndex!==index))}>Remove event</button></fieldset>)}</div>:<p className="relationship-empty">No additional life events saved.</p>}<button type="button" className="event-add secondary" onClick={()=>onChange([...value,{type:'residence',date:null,place:null,description:null}])}>＋ Add life event</button></section>
+const lifeEventTypeOptions = [
+  ['residence', 'Residence'],
+  ['marriage', 'Marriage'],
+  ['divorce', 'Divorce'],
+  ['burial', 'Burial'],
+  ['immigration', 'Immigration'],
+  ['education', 'Education'],
+  ['military', 'Military service'],
+  ['occupation', 'Occupation'],
+  ['other', 'Other'],
+];
+export const eventLabel = (type: string) =>
+  lifeEventTypeOptions.find(([id]) => id === type)?.[1] || 'Life event';
+export function LifeEventManager({
+  value,
+  onChange,
+}: {
+  value: LifeEvent[];
+  onChange: (value: LifeEvent[]) => void;
+}) {
+  function update(index: number, change: Partial<LifeEvent>) {
+    onChange(
+      value.map((event, eventIndex) => (eventIndex === index ? { ...event, ...change } : event)),
+    );
+  }
+  return (
+    <section className="event-manager full">
+      <h3>Life events</h3>
+      {value.length ? (
+        <div className="event-edit-list">
+          {value.map((event, index) => (
+            <fieldset className="event-edit-row" key={event.id || index}>
+              <legend>{eventLabel(event.type)}</legend>
+              <label>
+                Event type
+                <select
+                  value={event.type}
+                  onChange={(change) => update(index, { type: change.target.value })}
+                >
+                  {lifeEventTypeOptions.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Date
+                <input
+                  type="date"
+                  value={event.date || ''}
+                  onChange={(change) => update(index, { date: change.target.value || null })}
+                />
+              </label>
+              <label className="event-place">
+                Place
+                <input
+                  maxLength={160}
+                  value={event.place || ''}
+                  onChange={(change) => update(index, { place: change.target.value || null })}
+                />
+              </label>
+              <label className="event-description">
+                Notes
+                <textarea
+                  rows={2}
+                  maxLength={1000}
+                  value={event.description || ''}
+                  onChange={(change) => update(index, { description: change.target.value || null })}
+                />
+              </label>
+              <button
+                type="button"
+                className="danger"
+                onClick={() => onChange(value.filter((_, eventIndex) => eventIndex !== index))}
+              >
+                Remove event
+              </button>
+            </fieldset>
+          ))}
+        </div>
+      ) : (
+        <p className="relationship-empty">No additional life events saved.</p>
+      )}
+      <button
+        type="button"
+        className="event-add secondary"
+        onClick={() =>
+          onChange([...value, { type: 'residence', date: null, place: null, description: null }])
+        }
+      >
+        ＋ Add life event
+      </button>
+    </section>
+  );
 }

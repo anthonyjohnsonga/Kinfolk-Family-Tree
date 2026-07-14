@@ -1,11 +1,233 @@
-import { useEffect,useMemo,useRef,useState,type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate, inputDate, year } from '../format';
 
-export function TreeView({tree,onEdit}:{tree:Tree;onEdit:(person:Person)=>void}){
- const treeRef=useRef<HTMLElement>(null);const [paths,setPaths]=useState<string[]>([]);
- const generations=useMemo(()=>{const cache=new Map<string,number>();const base=(p:Person,trail=new Set<string>()):number=>{if(cache.has(p.id))return cache.get(p.id)!;if(trail.has(p.id)||!p.parentLinks.length)return 0;const next=new Set(trail).add(p.id);const parents=p.parentLinks.map(l=>tree.people.find(x=>x.id===l.parentId)).filter(Boolean) as Person[];const value=parents.length?Math.max(...parents.map(x=>base(x,next)))+1:0;cache.set(p.id,value);return value};const roots=new Map(tree.people.map(p=>[p.id,p.id]));const find=(id:string):string=>{const parent=roots.get(id)||id;if(parent===id)return id;const root=find(parent);roots.set(id,root);return root};const union=(a:string,b:string)=>{const left=find(a),right=find(b);if(left!==right)roots.set(right,left)};tree.people.forEach(p=>{p.partnershipsA.forEach(x=>union(x.partnerAId,x.partnerBId));p.partnershipsB.forEach(x=>union(x.partnerAId,x.partnerBId));p.siblingLinksA.forEach(x=>union(x.siblingAId,x.siblingBId));p.siblingLinksB.forEach(x=>union(x.siblingAId,x.siblingBId))});const groupGeneration=new Map<string,number>();tree.people.forEach(p=>{const root=find(p.id);groupGeneration.set(root,Math.max(groupGeneration.get(root)||0,base(p)))});const map=new Map<number,Person[]>();tree.people.forEach(p=>{const n=groupGeneration.get(find(p.id))||0;map.set(n,[...(map.get(n)||[]),p])});return [...map.entries()].sort(([a],[b])=>a-b)},[tree]);
- useEffect(()=>{const draw=()=>{const root=treeRef.current;if(!root)return;const box=root.getBoundingClientRect(),next:string[]=[],families=new Map<string,{parentIds:string[];children:Person[]}>();tree.people.forEach(child=>{const parentIds=[...new Set(child.parentLinks.map(link=>link.parentId))].sort();if(!parentIds.length)return;const key=parentIds.join('|'),family=families.get(key);if(family)family.children.push(child);else families.set(key,{parentIds,children:[child]})});families.forEach(family=>{const parents=family.parentIds.map(id=>root.querySelector<HTMLElement>(`[data-person="${CSS.escape(id)}"]`)).filter(Boolean) as HTMLElement[],children=family.children.map(child=>root.querySelector<HTMLElement>(`[data-person="${CSS.escape(child.id)}"]`)).filter(Boolean) as HTMLElement[];if(parents.length!==family.parentIds.length||!children.length)return;const parentPoints=parents.map(parent=>{const rect=parent.getBoundingClientRect();return{x:rect.left-box.left+rect.width/2,y:rect.bottom-box.top}}),childPoints=children.map(child=>{const rect=child.getBoundingClientRect();return{x:rect.left-box.left+rect.width/2,y:rect.top-box.top}}),parentBottom=Math.max(...parentPoints.map(point=>point.y)),childTop=Math.min(...childPoints.map(point=>point.y)),gap=Math.max(24,childTop-parentBottom),parentJoinY=parentBottom+gap*.35,childBusY=parentBottom+gap*.65,couple=parents.length===2?parents[0].closest<HTMLElement>('.couple'):null,coupleLine=couple&&parents[1].closest('.couple')===couple?couple.querySelector<HTMLElement>(':scope > span'):null,segments:string[]=[];let joinX=parentPoints.reduce((sum,point)=>sum+point.x,0)/parentPoints.length;if(coupleLine){const line=coupleLine.getBoundingClientRect();joinX=line.left-box.left+line.width/2;segments.push(`M ${joinX} ${line.top-box.top+line.height/2} V ${childBusY}`)}else if(parentPoints.length===1)segments.push(`M ${parentPoints[0].x} ${parentPoints[0].y} V ${childBusY}`);else{parentPoints.forEach(point=>segments.push(`M ${point.x} ${point.y} V ${parentJoinY} H ${joinX}`));segments.push(`M ${joinX} ${parentJoinY} V ${childBusY}`)}const busPoints=[joinX,...childPoints.map(point=>point.x)];segments.push(`M ${Math.min(...busPoints)} ${childBusY} H ${Math.max(...busPoints)}`);childPoints.forEach(point=>segments.push(`M ${point.x} ${childBusY} V ${point.y}`));next.push(segments.join(' '))});setPaths(next)};requestAnimationFrame(draw);window.addEventListener('resize',draw);return()=>window.removeEventListener('resize',draw)},[tree]);
- const card=(p:Person)=>{const siblingLinks=[...p.siblingLinksA,...p.siblingLinksB],siblingNames=siblingLinks.map(link=>tree.people.find(x=>x.id===(link.siblingAId===p.id?link.siblingBId:link.siblingAId))?.name.split(' ')[0]).filter(Boolean);return <button className="person-card" data-person={p.id} key={p.id} onClick={()=>onEdit(p)}><b>{p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('')}</b><h3>{p.name}</h3>{p.maidenName&&<em>Born {p.maidenName}</em>}<p>{year(p.birthDate)} — {p.deathDate?year(p.deathDate):'present'}</p>{p.parentLinks.length>0&&<small>Child of {p.parentLinks.map(l=>tree.people.find(x=>x.id===l.parentId)?.name.split(' ')[0]).filter(Boolean).join(' & ')}</small>}{siblingNames.length>0&&<small>Sibling of {siblingNames.join(' & ')}</small>}</button>};
- return <section ref={treeRef} className={`tree-space ${tree.backgroundStyle}`} style={{'--tree-bg':tree.backgroundColor,'--tree-color':tree.treeColor,'--accent':tree.accentColor} as CSSProperties}><div className="tree-art"/><svg aria-hidden="true" style={{position:'absolute',inset:0,width:'100%',height:'100%',overflow:'visible',pointerEvents:'none'}}>{paths.map((path,index)=><path d={path} key={index} fill="none" stroke={tree.treeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>)}</svg>{generations.map(([n,people])=>{const rendered=new Set<string>();return <div className="generation" key={n}>{people.map(p=>{if(rendered.has(p.id))return null;const link=[...p.partnershipsA,...p.partnershipsB][0];const partner=link&&people.find(x=>x.id===(link.partnerAId===p.id?link.partnerBId:link.partnerAId));rendered.add(p.id);if(partner){rendered.add(partner.id);const married=link.status==='married'||Boolean(link.marriageDate);return <div className="couple" key={p.id}>{card(p)}<span className="couple-connection"><span className="couple-label"><strong>{married?'Married':'Partners'}</strong>{link.marriageDate&&<time dateTime={inputDate(link.marriageDate)}>{displayDate(link.marriageDate)}</time>}</span></span>{card(partner)}</div>}return card(p)})}</div>})}</section>
+export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person) => void }) {
+  const treeRef = useRef<HTMLElement>(null);
+  const [paths, setPaths] = useState<string[]>([]);
+  const generations = useMemo(() => {
+    const cache = new Map<string, number>();
+    const base = (p: Person, trail = new Set<string>()): number => {
+      if (cache.has(p.id)) return cache.get(p.id)!;
+      if (trail.has(p.id) || !p.parentLinks.length) return 0;
+      const next = new Set(trail).add(p.id);
+      const parents = p.parentLinks
+        .map((l) => tree.people.find((x) => x.id === l.parentId))
+        .filter(Boolean) as Person[];
+      const value = parents.length ? Math.max(...parents.map((x) => base(x, next))) + 1 : 0;
+      cache.set(p.id, value);
+      return value;
+    };
+    const roots = new Map(tree.people.map((p) => [p.id, p.id]));
+    const find = (id: string): string => {
+      const parent = roots.get(id) || id;
+      if (parent === id) return id;
+      const root = find(parent);
+      roots.set(id, root);
+      return root;
+    };
+    const union = (a: string, b: string) => {
+      const left = find(a);
+      const right = find(b);
+      if (left !== right) roots.set(right, left);
+    };
+    tree.people.forEach((p) => {
+      p.partnershipsA.forEach((x) => union(x.partnerAId, x.partnerBId));
+      p.partnershipsB.forEach((x) => union(x.partnerAId, x.partnerBId));
+      p.siblingLinksA.forEach((x) => union(x.siblingAId, x.siblingBId));
+      p.siblingLinksB.forEach((x) => union(x.siblingAId, x.siblingBId));
+    });
+    const groupGeneration = new Map<string, number>();
+    tree.people.forEach((p) => {
+      const root = find(p.id);
+      groupGeneration.set(root, Math.max(groupGeneration.get(root) || 0, base(p)));
+    });
+    const map = new Map<number, Person[]>();
+    tree.people.forEach((p) => {
+      const n = groupGeneration.get(find(p.id)) || 0;
+      map.set(n, [...(map.get(n) || []), p]);
+    });
+    return [...map.entries()].sort(([a], [b]) => a - b);
+  }, [tree]);
+  useEffect(() => {
+    const draw = () => {
+      const root = treeRef.current;
+      if (!root) return;
+      const box = root.getBoundingClientRect();
+      const next: string[] = [];
+      const families = new Map<string, { parentIds: string[]; children: Person[] }>();
+      tree.people.forEach((child) => {
+        const parentIds = [...new Set(child.parentLinks.map((link) => link.parentId))].sort();
+        if (!parentIds.length) return;
+        const key = parentIds.join('|');
+        const family = families.get(key);
+        if (family) family.children.push(child);
+        else families.set(key, { parentIds, children: [child] });
+      });
+      families.forEach((family) => {
+        const parents = family.parentIds
+          .map((id) => root.querySelector<HTMLElement>(`[data-person="${CSS.escape(id)}"]`))
+          .filter(Boolean) as HTMLElement[];
+        const children = family.children
+          .map((child) =>
+            root.querySelector<HTMLElement>(`[data-person="${CSS.escape(child.id)}"]`),
+          )
+          .filter(Boolean) as HTMLElement[];
+        if (parents.length !== family.parentIds.length || !children.length) return;
+        const parentPoints = parents.map((parent) => {
+          const rect = parent.getBoundingClientRect();
+          return { x: rect.left - box.left + rect.width / 2, y: rect.bottom - box.top };
+        });
+        const childPoints = children.map((child) => {
+          const rect = child.getBoundingClientRect();
+          return { x: rect.left - box.left + rect.width / 2, y: rect.top - box.top };
+        });
+        const parentBottom = Math.max(...parentPoints.map((point) => point.y));
+        const childTop = Math.min(...childPoints.map((point) => point.y));
+        const gap = Math.max(24, childTop - parentBottom);
+        const parentJoinY = parentBottom + gap * 0.35;
+        const childBusY = parentBottom + gap * 0.65;
+        const couple = parents.length === 2 ? parents[0].closest<HTMLElement>('.couple') : null;
+        const coupleLine =
+          couple && parents[1].closest('.couple') === couple
+            ? couple.querySelector<HTMLElement>(':scope > span')
+            : null;
+        const segments: string[] = [];
+        let joinX = parentPoints.reduce((sum, point) => sum + point.x, 0) / parentPoints.length;
+        if (coupleLine) {
+          const line = coupleLine.getBoundingClientRect();
+          joinX = line.left - box.left + line.width / 2;
+          segments.push(`M ${joinX} ${line.top - box.top + line.height / 2} V ${childBusY}`);
+        } else if (parentPoints.length === 1)
+          segments.push(`M ${parentPoints[0].x} ${parentPoints[0].y} V ${childBusY}`);
+        else {
+          parentPoints.forEach((point) =>
+            segments.push(`M ${point.x} ${point.y} V ${parentJoinY} H ${joinX}`),
+          );
+          segments.push(`M ${joinX} ${parentJoinY} V ${childBusY}`);
+        }
+        const busPoints = [joinX, ...childPoints.map((point) => point.x)];
+        segments.push(`M ${Math.min(...busPoints)} ${childBusY} H ${Math.max(...busPoints)}`);
+        childPoints.forEach((point) => segments.push(`M ${point.x} ${childBusY} V ${point.y}`));
+        next.push(segments.join(' '));
+      });
+      setPaths(next);
+    };
+    requestAnimationFrame(draw);
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, [tree]);
+  const card = (p: Person) => {
+    const siblingLinks = [...p.siblingLinksA, ...p.siblingLinksB];
+    const siblingNames = siblingLinks
+      .map(
+        (link) =>
+          tree.people
+            .find((x) => x.id === (link.siblingAId === p.id ? link.siblingBId : link.siblingAId))
+            ?.name.split(' ')[0],
+      )
+      .filter(Boolean);
+    return (
+      <button className="person-card" data-person={p.id} key={p.id} onClick={() => onEdit(p)}>
+        <b>
+          {p.name
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((x) => x[0])
+            .join('')}
+        </b>
+        <h3>{p.name}</h3>
+        {p.maidenName && <em>Born {p.maidenName}</em>}
+        <p>
+          {year(p.birthDate)} — {p.deathDate ? year(p.deathDate) : 'present'}
+        </p>
+        {p.parentLinks.length > 0 && (
+          <small>
+            Child of{' '}
+            {p.parentLinks
+              .map((l) => tree.people.find((x) => x.id === l.parentId)?.name.split(' ')[0])
+              .filter(Boolean)
+              .join(' & ')}
+          </small>
+        )}
+        {siblingNames.length > 0 && <small>Sibling of {siblingNames.join(' & ')}</small>}
+      </button>
+    );
+  };
+  return (
+    <section
+      ref={treeRef}
+      className={`tree-space ${tree.backgroundStyle}`}
+      style={
+        {
+          '--tree-bg': tree.backgroundColor,
+          '--tree-color': tree.treeColor,
+          '--accent': tree.accentColor,
+        } as CSSProperties
+      }
+    >
+      <div className="tree-art" />
+      <svg
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'visible',
+          pointerEvents: 'none',
+        }}
+      >
+        {paths.map((path, index) => (
+          <path
+            d={path}
+            key={index}
+            fill="none"
+            stroke={tree.treeColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ))}
+      </svg>
+      {generations.map(([n, people]) => {
+        const rendered = new Set<string>();
+        return (
+          <div className="generation" key={n}>
+            {people.map((p) => {
+              if (rendered.has(p.id)) return null;
+              const link = [...p.partnershipsA, ...p.partnershipsB][0];
+              const partner =
+                link &&
+                people.find(
+                  (x) => x.id === (link.partnerAId === p.id ? link.partnerBId : link.partnerAId),
+                );
+              rendered.add(p.id);
+              if (partner) {
+                rendered.add(partner.id);
+                const married = link.status === 'married' || Boolean(link.marriageDate);
+                return (
+                  <div className="couple" key={p.id}>
+                    {card(p)}
+                    <span className="couple-connection">
+                      <span className="couple-label">
+                        <strong>{married ? 'Married' : 'Partners'}</strong>
+                        {link.marriageDate && (
+                          <time dateTime={inputDate(link.marriageDate)}>
+                            {displayDate(link.marriageDate)}
+                          </time>
+                        )}
+                      </span>
+                    </span>
+                    {card(partner)}
+                  </div>
+                );
+              }
+              return card(p);
+            })}
+          </div>
+        );
+      })}
+    </section>
+  );
 }

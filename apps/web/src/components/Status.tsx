@@ -1,1 +1,13 @@
-export function Status({message,onRetry}:{message:string;onRetry?:()=>void}){return <div className="status-error" role="alert"><strong>Something went wrong</strong><p>{message}</p>{onRetry&&<button type="button" onClick={onRetry}>Try again</button>}</div>}
+export function Status({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="status-error" role="alert">
+      <strong>Something went wrong</strong>
+      <p>{message}</p>
+      {onRetry && (
+        <button type="button" onClick={onRetry}>
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}
