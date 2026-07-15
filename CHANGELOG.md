@@ -7,6 +7,9 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 ### Added
 
 - Record divorces and remarriages: each person can now have multiple partnerships with partnered, married, divorced, or widowed status plus marriage and divorce dates. Former partnerships appear in person details and the life timeline, while only current couples are drawn side by side in the tree.
+- Add a Settings area in the top-right toolbar that now hosts the tree design controls alongside a new export and import section.
+- Export any tree as a GEDCOM 5.5.1 file, including people, parent and sibling relationships, partnerships with marriage and divorce dates, and life events. Kinfolk-specific details use custom GEDCOM tags so they survive a round trip.
+- Import a GEDCOM file as a new tree from the Settings area or directly from the home screen, without changing existing trees and accepting files from Kinfolk and other genealogy software.
 
 ### Changed
 

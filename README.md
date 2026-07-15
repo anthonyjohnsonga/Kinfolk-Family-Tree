@@ -453,7 +453,8 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 - Connect up to two parents and render multiple generations
 - Connect couples with partnership status and marriage dates, including divorces, widowhood, and remarriages
 - Add full, half, step, adopted, and general sibling relationships
-- Customize and persist each tree's style and colors
+- Customize and persist each tree's style and colors from the Settings area
+- Export trees as GEDCOM 5.5.1 files and import GEDCOM files as new trees
 - Protect all family data with first-run administrator setup and expiring server sessions
 
 ## Privacy

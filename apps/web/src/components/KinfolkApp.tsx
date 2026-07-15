@@ -5,7 +5,8 @@ import { Status } from './Status';
 import { TreeView } from './TreeView';
 import { PersonDetails } from './PersonDetails';
 import { PersonEditor } from './PersonEditor';
-import { DesignEditor } from './DesignEditor';
+import { Settings } from './Settings';
+import { GedcomImportButton } from './GedcomImportButton';
 
 export function KinfolkApp({
   username,
@@ -20,8 +21,9 @@ export function KinfolkApp({
   const [tree, setTree] = useState<Tree | null>(null);
   const [viewer, setViewer] = useState<Person | false>(false);
   const [editor, setEditor] = useState<Person | null | false>(false);
-  const [design, setDesign] = useState(false);
+  const [settings, setSettings] = useState(false);
   const [error, setError] = useState('');
+  const [importError, setImportError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   async function load() {
@@ -120,6 +122,23 @@ export function KinfolkApp({
                 <p>Create your first tree using the form above.</p>
               </div>
             )}
+            <hr />
+            <h3>Import a tree</h3>
+            <p className="relationship-empty">
+              Have a GEDCOM (.ged) file from Kinfolk or another genealogy app? Import it as a new
+              tree.
+            </p>
+            <GedcomImportButton
+              label="Import GEDCOM file…"
+              className="secondary"
+              disabled={busy}
+              onImported={(imported) => {
+                setTree(imported);
+                void load();
+              }}
+              onError={setImportError}
+            />
+            {importError && <Status message={importError} />}
           </section>
         </div>
       </main>
@@ -164,12 +183,12 @@ export function KinfolkApp({
               ))}
             </select>
           </label>
-          <button className="secondary" onClick={() => setDesign(true)}>
-            Design
-          </button>
           <button onClick={() => setEditor(null)}>＋ Add person</button>
           <button className="auth-logout secondary" onClick={onLogout} disabled={logoutBusy}>
             Sign out · {username}
+          </button>
+          <button className="secondary" onClick={() => setSettings(true)}>
+            ⚙ Settings
           </button>
         </nav>
       </header>
@@ -212,7 +231,20 @@ export function KinfolkApp({
           onClose={() => setEditor(false)}
         />
       )}{' '}
-      {design && <DesignEditor tree={tree} onSaved={setTree} onClose={() => setDesign(false)} />}
+      {settings && (
+        <Settings
+          tree={tree}
+          onSaved={setTree}
+          onClose={() => setSettings(false)}
+          onImported={(imported) => {
+            setSettings(false);
+            setViewer(false);
+            setEditor(false);
+            setTree(imported);
+            void load();
+          }}
+        />
+      )}
     </main>
   );
 }
