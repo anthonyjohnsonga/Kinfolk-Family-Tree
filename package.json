@@ -11,6 +11,7 @@
     "format": "prettier --write \"apps/*/src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx}\"",
     "release:check": "node scripts/release-check.mjs",
+    "test": "npm run test -w @kinfolk/api && npm run test -w @kinfolk/web",
     "typecheck": "npm run typecheck -w @kinfolk/api && npm run typecheck -w @kinfolk/web"
   },
   "engines": {

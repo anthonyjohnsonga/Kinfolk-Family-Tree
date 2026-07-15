@@ -2,17 +2,23 @@ import { db } from './db.js';
 import { date, ordered } from './utils.js';
 import type { PersonBody } from './contract.js';
 
-async function assertMembers(treeId: string, ids: string[]) {
+async function assertMembers(treeId: string, ids: string[], client: typeof db) {
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return;
-  const count = await db.person.count({ where: { treeId, id: { in: unique } } });
+  const count = await client.person.count({ where: { treeId, id: { in: unique } } });
   if (count !== unique.length)
     throw Object.assign(new Error('Every relationship must belong to the same tree'), {
       statusCode: 400,
     });
 }
 
-export async function syncRelationships(personId: string, treeId: string, body: PersonBody) {
+// The client parameter exists so tests can substitute a recording fake.
+export async function syncRelationships(
+  personId: string,
+  treeId: string,
+  body: PersonBody,
+  client: typeof db = db,
+) {
   const siblingIds = body.siblings?.map((sibling) => sibling.personId) || [];
   if (new Set(siblingIds).size !== siblingIds.length)
     throw Object.assign(new Error('Each sibling can be selected only once'), { statusCode: 400 });
@@ -28,8 +34,8 @@ export async function syncRelationships(personId: string, treeId: string, body: 
   ];
   if (relationIds.includes(personId))
     throw Object.assign(new Error('A person cannot be related to themselves'), { statusCode: 400 });
-  await assertMembers(treeId, relationIds);
-  await db.$transaction(async (tx) => {
+  await assertMembers(treeId, relationIds, client);
+  await client.$transaction(async (tx) => {
     await tx.parentRelationship.deleteMany({ where: { childId: personId } });
     if (body.parentIds?.length)
       await tx.parentRelationship.createMany({
@@ -92,9 +98,9 @@ export async function syncRelationships(personId: string, treeId: string, body: 
   });
 }
 
-export async function syncLifeEvents(personId: string, body: PersonBody) {
+export async function syncLifeEvents(personId: string, body: PersonBody, client: typeof db = db) {
   if (!body.lifeEvents) return;
-  await db.$transaction(async (tx) => {
+  await client.$transaction(async (tx) => {
     await tx.lifeEvent.deleteMany({ where: { personId } });
     if (body.lifeEvents?.length)
       await tx.lifeEvent.createMany({
