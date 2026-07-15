@@ -37,7 +37,8 @@
   text-transform: none;
 }
 
-.sibling-manager {
+.sibling-manager,
+.partnership-manager {
   display: grid;
   gap: 10px;
 }

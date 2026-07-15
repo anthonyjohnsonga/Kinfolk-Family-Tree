@@ -12,3 +12,9 @@ export type {
 } from '@kinfolk/api/contract';
 
 export type SiblingDraft = { personId: string; type: string };
+export type PartnershipDraft = {
+  personId: string;
+  status: string;
+  marriageDate: string;
+  divorceDate: string;
+};

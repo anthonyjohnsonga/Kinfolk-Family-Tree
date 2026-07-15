@@ -17,7 +17,15 @@ export const lifeEventTypes = [
   'other',
 ] as const;
 export type LifeEventType = (typeof lifeEventTypes)[number];
+export const partnershipStatuses = ['partnered', 'married', 'divorced', 'widowed'] as const;
+export type PartnershipStatus = (typeof partnershipStatuses)[number];
 
+export type PartnershipInput = {
+  personId: string;
+  status: PartnershipStatus;
+  marriageDate?: string;
+  divorceDate?: string;
+};
 export type LifeEventInput = {
   type: LifeEventType;
   date?: string;
@@ -33,6 +41,7 @@ export type PersonBody = {
   deathPlace?: string;
   bio?: string;
   parentIds?: string[];
+  partnerships?: PartnershipInput[];
   partnerId?: string;
   marriageDate?: string;
   partnershipStatus?: string;
@@ -48,6 +57,7 @@ export type Partnership = {
   partnerBId: string;
   status: string;
   marriageDate: string | null;
+  divorceDate: string | null;
 };
 export type SiblingLink = { siblingAId: string; siblingBId: string; type: string };
 // id is optional because the web editor also uses this shape for unsaved drafts.

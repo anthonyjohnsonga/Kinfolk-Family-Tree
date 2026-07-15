@@ -105,6 +105,7 @@ model Partnership {
   partnerBId   String    @db.Uuid
   status       String    @default("partnered")
   marriageDate DateTime?
+  divorceDate  DateTime?
   partnerA     Person    @relation("PartnerA", fields: [partnerAId], references: [id], onDelete: Cascade)
   partnerB     Person    @relation("PartnerB", fields: [partnerBId], references: [id], onDelete: Cascade)
 

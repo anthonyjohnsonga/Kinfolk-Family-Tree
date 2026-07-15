@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import type { LifeEvent, Person, SiblingDraft, Tree } from '../types';
+import type { LifeEvent, PartnershipDraft, Person, SiblingDraft, Tree } from '../types';
 import { api } from '../api';
 import { inputDate } from '../format';
+import { PartnershipManager } from './PartnershipManager';
 import { SiblingManager } from './SiblingManager';
 import { LifeEventManager } from './LifeEventManager';
 
@@ -16,16 +17,19 @@ export function PersonEditor({
   onSaved: (tree: Tree) => void;
   onClose: () => void;
 }) {
-  const partnership = person ? [...person.partnershipsA, ...person.partnershipsB][0] : undefined;
-  const partnerId = partnership
-    ? partnership.partnerAId === person?.id
-      ? partnership.partnerBId
-      : partnership.partnerAId
-    : '';
-  const [selectedPartner, setSelectedPartner] = useState(partnerId);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const others = tree.people.filter((p) => p.id !== person?.id);
+  const [partnerships, setPartnerships] = useState<PartnershipDraft[]>(() =>
+    person
+      ? [...person.partnershipsA, ...person.partnershipsB].map((link) => ({
+          personId: link.partnerAId === person.id ? link.partnerBId : link.partnerAId,
+          status: link.status,
+          marriageDate: inputDate(link.marriageDate),
+          divorceDate: inputDate(link.divorceDate),
+        }))
+      : [],
+  );
   const [siblings, setSiblings] = useState<SiblingDraft[]>(() =>
     person
       ? [...person.siblingLinksA, ...person.siblingLinksB].map((link) => ({
@@ -51,9 +55,12 @@ export function PersonEditor({
       deathPlace: d.get('deathPlace') || undefined,
       bio: d.get('bio') || undefined,
       parentIds: [d.get('parent1'), d.get('parent2')].filter(Boolean),
-      partnerId: d.get('partnerId') || undefined,
-      partnershipStatus: selectedPartner ? d.get('partnershipStatus') || 'partnered' : undefined,
-      marriageDate: d.get('marriageDate') || undefined,
+      partnerships: partnerships.map(({ personId, status, marriageDate, divorceDate }) => ({
+        personId,
+        status,
+        marriageDate: marriageDate || undefined,
+        divorceDate: divorceDate || undefined,
+      })),
       siblings,
       lifeEvents: lifeEvents.map(({ type, date, place, description }) => ({
         type,
@@ -160,43 +167,7 @@ export function PersonEditor({
               ))}
             </select>
           </label>
-          <h3 className="full">Couple</h3>
-          <label>
-            Spouse or partner
-            <select
-              name="partnerId"
-              value={selectedPartner}
-              onChange={(e) => setSelectedPartner(e.target.value)}
-            >
-              <option value="">None</option>
-              {others.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Status
-            <select
-              name="partnershipStatus"
-              defaultValue={partnership?.status || 'partnered'}
-              disabled={!selectedPartner}
-            >
-              <option value="partnered">Partners</option>
-              <option value="married">Married</option>
-            </select>
-          </label>
-          <label>
-            Marriage date
-            <input
-              name="marriageDate"
-              type="date"
-              defaultValue={inputDate(partnership?.marriageDate || null)}
-              disabled={!selectedPartner}
-            />
-          </label>
-          <span />
+          <PartnershipManager people={others} value={partnerships} onChange={setPartnerships} />
           <SiblingManager people={others} value={siblings} onChange={setSiblings} />
           <LifeEventManager value={lifeEvents} onChange={setLifeEvents} />
           <label className="full">

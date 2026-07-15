@@ -131,7 +131,9 @@ export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person
           <div className="generation" key={n}>
             {people.map((p) => {
               if (rendered.has(p.id)) return null;
-              const link = [...p.partnershipsA, ...p.partnershipsB][0];
+              const link = [...p.partnershipsA, ...p.partnershipsB].find(
+                (x) => x.status === 'married' || x.status === 'partnered',
+              );
               const partner =
                 link &&
                 people.find(

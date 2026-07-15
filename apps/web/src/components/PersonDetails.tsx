@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate } from '../format';
 import { eventLabel } from './LifeEventManager';
@@ -19,14 +20,24 @@ export function PersonDetails({
       .filter(Boolean)
       .join(', ');
   const parents = names(person.parentLinks.map((link) => link.parentId));
-  const partnership = [...person.partnershipsA, ...person.partnershipsB][0];
-  const partner =
-    partnership &&
-    tree.people.find(
-      (candidate) =>
-        candidate.id ===
-        (partnership.partnerAId === person.id ? partnership.partnerBId : partnership.partnerAId),
-    );
+  const partnerships = [...person.partnershipsA, ...person.partnershipsB]
+    .map((partnership) => ({
+      partnership,
+      partner: tree.people.find(
+        (candidate) =>
+          candidate.id ===
+          (partnership.partnerAId === person.id ? partnership.partnerBId : partnership.partnerAId),
+      ),
+    }))
+    .filter((entry) => entry.partner);
+  const partnershipTitle = (status: string) =>
+    status === 'married'
+      ? 'Spouse'
+      : status === 'divorced'
+        ? 'Former spouse'
+        : status === 'widowed'
+          ? 'Late spouse'
+          : 'Partner';
   const siblings = names(
     [...person.siblingLinksA, ...person.siblingLinksB].map((link) =>
       link.siblingAId === person.id ? link.siblingBId : link.siblingAId,
@@ -36,6 +47,28 @@ export function PersonDetails({
     ...(person.birthDate || person.birthPlace
       ? [{ type: 'Birth', date: person.birthDate, place: person.birthPlace, description: null }]
       : []),
+    ...partnerships.flatMap(({ partnership, partner }) => [
+      ...(partnership.marriageDate
+        ? [
+            {
+              type: 'Marriage',
+              date: partnership.marriageDate,
+              place: null,
+              description: `Married ${partner!.name}`,
+            },
+          ]
+        : []),
+      ...(partnership.divorceDate
+        ? [
+            {
+              type: 'Divorce',
+              date: partnership.divorceDate,
+              place: null,
+              description: `Divorced ${partner!.name}`,
+            },
+          ]
+        : []),
+    ]),
     ...person.lifeEvents.map((event) => ({
       type: eventLabel(event.type),
       date: event.date,
@@ -88,17 +121,20 @@ export function PersonDetails({
                 <dd>{parents}</dd>
               </>
             )}
-            {partner && (
-              <>
-                <dt>{partnership?.status === 'married' ? 'Spouse' : 'Partner'}</dt>
+            {partnerships.map(({ partnership, partner }) => (
+              <Fragment key={partnership.partnerAId + partnership.partnerBId}>
+                <dt>{partnershipTitle(partnership.status)}</dt>
                 <dd>
-                  {partner.name}
-                  {partnership?.marriageDate
+                  {partner!.name}
+                  {partnership.marriageDate
                     ? ` · Married ${displayDate(partnership.marriageDate)}`
                     : ''}
+                  {partnership.divorceDate
+                    ? ` · Divorced ${displayDate(partnership.divorceDate)}`
+                    : ''}
                 </dd>
-              </>
-            )}
+              </Fragment>
+            ))}
             {siblings && (
               <>
                 <dt>Siblings</dt>
@@ -106,7 +142,7 @@ export function PersonDetails({
               </>
             )}
           </dl>
-          {!parents && !partner && !siblings && <p>No relationships recorded.</p>}
+          {!parents && !partnerships.length && !siblings && <p>No relationships recorded.</p>}
         </section>
         <section className="detail-section">
           <h3>Life timeline</h3>

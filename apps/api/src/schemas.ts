@@ -1,4 +1,4 @@
-import { lifeEventTypes, siblingTypes } from './contract.js';
+import { lifeEventTypes, partnershipStatuses, siblingTypes } from './contract.js';
 
 export const personBodySchema = {
   type: 'object',
@@ -18,9 +18,24 @@ export const personBodySchema = {
       uniqueItems: true,
       items: { type: 'string', format: 'uuid' },
     },
+    partnerships: {
+      type: 'array',
+      maxItems: 50,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['personId', 'status'],
+        properties: {
+          personId: { type: 'string', format: 'uuid' },
+          status: { type: 'string', enum: partnershipStatuses },
+          marriageDate: { type: 'string', format: 'date' },
+          divorceDate: { type: 'string', format: 'date' },
+        },
+      },
+    },
     partnerId: { type: 'string', format: 'uuid' },
     marriageDate: { type: 'string', format: 'date' },
-    partnershipStatus: { type: 'string', enum: ['partnered', 'married'] },
+    partnershipStatus: { type: 'string', enum: partnershipStatuses },
     siblings: {
       type: 'array',
       maxItems: 100,

@@ -16,8 +16,12 @@ export async function syncRelationships(personId: string, treeId: string, body: 
   const siblingIds = body.siblings?.map((sibling) => sibling.personId) || [];
   if (new Set(siblingIds).size !== siblingIds.length)
     throw Object.assign(new Error('Each sibling can be selected only once'), { statusCode: 400 });
+  const partnershipIds = body.partnerships?.map((partnership) => partnership.personId) || [];
+  if (new Set(partnershipIds).size !== partnershipIds.length)
+    throw Object.assign(new Error('Each partner can be selected only once'), { statusCode: 400 });
   const relationIds = [
     ...(body.parentIds || []),
+    ...partnershipIds,
     body.partnerId || '',
     ...siblingIds,
     body.siblingId || '',
@@ -31,18 +35,25 @@ export async function syncRelationships(personId: string, treeId: string, body: 
       await tx.parentRelationship.createMany({
         data: body.parentIds.map((parentId) => ({ treeId, parentId, childId: personId })),
       });
-    await tx.partnership.deleteMany({
-      where: {
-        OR: [
-          { partnerAId: personId },
-          { partnerBId: personId },
-          ...(body.partnerId
-            ? [{ partnerAId: body.partnerId }, { partnerBId: body.partnerId }]
-            : []),
-        ],
-      },
-    });
-    if (body.partnerId) {
+    if (body.partnerships) {
+      await tx.partnership.deleteMany({
+        where: { OR: [{ partnerAId: personId }, { partnerBId: personId }] },
+      });
+      if (body.partnerships.length)
+        await tx.partnership.createMany({
+          data: body.partnerships.map((partnership) => {
+            const [partnerAId, partnerBId] = ordered(personId, partnership.personId);
+            return {
+              treeId,
+              partnerAId,
+              partnerBId,
+              status: partnership.status,
+              marriageDate: date(partnership.marriageDate),
+              divorceDate: date(partnership.divorceDate),
+            };
+          }),
+        });
+    } else if (body.partnerId) {
       const [partnerAId, partnerBId] = ordered(personId, body.partnerId);
       await tx.partnership.upsert({
         where: { partnerAId_partnerBId: { partnerAId, partnerBId } },

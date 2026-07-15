@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+### Added
+
+- Record divorces and remarriages: each person can now have multiple partnerships with partnered, married, divorced, or widowed status plus marriage and divorce dates. Former partnerships appear in person details and the life timeline, while only current couples are drawn side by side in the tree.
+
 ### Changed
 
 - Split the API server and React application entry points into focused route, component, type, query, schema, formatting, and utility modules to make the codebase easier to review and maintain without changing user-facing behavior.
