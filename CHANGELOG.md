@@ -9,6 +9,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 - Split the API server and React application entry points into focused route, component, type, query, schema, formatting, and utility modules to make the codebase easier to review and maintain without changing user-facing behavior.
 - Add a pinned Prettier configuration and formatting commands, format the API and web source consistently, and enforce the formatting check in continuous integration.
 - Share API request and response type definitions with the web application through an exported contract module, reducing the risk of client and server types drifting apart.
+- Extract generation grouping and family connector calculations into a dedicated layout module so tree-rendering logic is easier to maintain and test without changing its output.
 
 ## [0.0.4] - 2026-07-13
 
