@@ -7,7 +7,7 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 | 1 | Complete relationship management | Complete (`v0.0.4`) | Add, edit, and remove multiple typed sibling relationships. |
 | 2 | Person details, life events, and locations | Complete (`v0.0.4`) | Person detail view, birth/death places, and structured timelines. |
 | 3 | Sources, citations, photographs, and documents | Planned | Attach evidence and server-stored media to people and facts. |
-| 4 | GEDCOM import and export | Complete (unreleased) | Use an open genealogy interchange format to avoid data lock-in. |
+| 4 | GEDCOM import and export | Complete (`v0.0.5`) | Use an open genealogy interchange format to avoid data lock-in. |
 | 5 | Explicit links between related family trees | Planned | Link people and trees deliberately instead of matching surnames automatically. |
 | 6 | Multiple users, permissions, and audit history | Planned | Add administrators, editors, read-only access, and change history. |
 
