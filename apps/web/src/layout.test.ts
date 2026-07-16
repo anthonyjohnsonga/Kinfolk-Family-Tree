@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Person } from './types';
-import { buildConnectorPath, computeGenerations, groupFamilies } from './layout';
+import { buildConnectorPath, computeGenerations, focusPeople, groupFamilies } from './layout';
 
 const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   id,
@@ -85,6 +85,45 @@ test('a parent cycle does not hang and still returns every person', () => {
     members.map((member) => member.id),
   );
   assert.deepEqual(everyone.sort(), ['a', 'b']);
+});
+
+test('focus keeps ancestors, descendants, and co-parents, hiding other branches', () => {
+  const people = [
+    person('grandma'),
+    person('mom', { parentLinks: [parentLink('grandma', 'mom')] }),
+    person('uncle', { parentLinks: [parentLink('grandma', 'uncle')] }),
+    person('dad'),
+    person('kid', { parentLinks: [parentLink('mom', 'kid'), parentLink('dad', 'kid')] }),
+    person('stranger'),
+  ];
+  const shown = focusPeople(people, 'mom')
+    .map((member) => member.id)
+    .sort();
+  assert.deepEqual(shown, ['dad', 'grandma', 'kid', 'mom']);
+});
+
+test('focus keeps partners of every shown person', () => {
+  const marriage = {
+    partnerAId: 'a',
+    partnerBId: 'b',
+    status: 'married',
+    marriageDate: null,
+    divorceDate: null,
+  };
+  const people = [
+    person('a', { partnershipsA: [marriage] }),
+    person('b', { partnershipsB: [marriage] }),
+    person('stranger'),
+  ];
+  const shown = focusPeople(people, 'a')
+    .map((member) => member.id)
+    .sort();
+  assert.deepEqual(shown, ['a', 'b']);
+});
+
+test('focus with an unknown id shows everyone', () => {
+  const people = [person('a'), person('b')];
+  assert.equal(focusPeople(people, 'missing'), people);
 });
 
 test('groups children by their exact parent set', () => {

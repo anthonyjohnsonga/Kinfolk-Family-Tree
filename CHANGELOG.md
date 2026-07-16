@@ -4,7 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
-No changes yet.
+### Added
+
+- Navigate the tree like a canvas: drag to pan, zoom with the mouse wheel or on-screen controls, and reset the view with one click.
+- Focus the tree on one person from their details view, showing only their ancestors, descendants, and immediate partners, with a banner to return to the full tree.
 
 ## [0.0.5] - 2026-07-15
 

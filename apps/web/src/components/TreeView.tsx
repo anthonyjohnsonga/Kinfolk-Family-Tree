@@ -1,35 +1,91 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate, inputDate, year } from '../format';
-import { buildConnectorPath, computeGenerations, groupFamilies, type Point } from '../layout';
+import {
+  buildConnectorPath,
+  computeGenerations,
+  focusPeople,
+  groupFamilies,
+  type Point,
+} from '../layout';
 
-export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person) => void }) {
-  const treeRef = useRef<HTMLElement>(null);
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 2.5;
+const clampScale = (value: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+
+type View = { x: number; y: number; scale: number };
+const HOME_VIEW: View = { x: 0, y: 0, scale: 1 };
+
+export function TreeView({
+  tree,
+  focusId,
+  onEdit,
+  onClearFocus,
+}: {
+  tree: Tree;
+  focusId: string | null;
+  onEdit: (person: Person) => void;
+  onClearFocus: () => void;
+}) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [paths, setPaths] = useState<string[]>([]);
-  const generations = useMemo(() => computeGenerations(tree.people), [tree]);
+  const [view, setView] = useState<View>(HOME_VIEW);
+  const drag = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+  const dragged = useRef(false);
+  const focusPerson = focusId ? tree.people.find((person) => person.id === focusId) : undefined;
+  const visible = useMemo(
+    () => (focusPerson ? focusPeople(tree.people, focusPerson.id) : tree.people),
+    [tree, focusPerson],
+  );
+  const generations = useMemo(() => computeGenerations(visible), [visible]);
   useEffect(() => {
+    setView(HOME_VIEW);
+  }, [tree.id, focusId]);
+  useEffect(() => {
+    const scale = view.scale;
     const draw = () => {
-      const root = treeRef.current;
-      if (!root) return;
-      const box = root.getBoundingClientRect();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const box = canvas.getBoundingClientRect();
       const next: string[] = [];
-      groupFamilies(tree.people).forEach((family) => {
+      groupFamilies(visible).forEach((family) => {
         const parents = family.parentIds
-          .map((id) => root.querySelector<HTMLElement>(`[data-person="${CSS.escape(id)}"]`))
+          .map((id) => canvas.querySelector<HTMLElement>(`[data-person="${CSS.escape(id)}"]`))
           .filter(Boolean) as HTMLElement[];
         const children = family.children
           .map((child) =>
-            root.querySelector<HTMLElement>(`[data-person="${CSS.escape(child.id)}"]`),
+            canvas.querySelector<HTMLElement>(`[data-person="${CSS.escape(child.id)}"]`),
           )
           .filter(Boolean) as HTMLElement[];
         if (parents.length !== family.parentIds.length || !children.length) return;
         const parentPoints = parents.map((parent) => {
           const rect = parent.getBoundingClientRect();
-          return { x: rect.left - box.left + rect.width / 2, y: rect.bottom - box.top };
+          return {
+            x: (rect.left - box.left + rect.width / 2) / scale,
+            y: (rect.bottom - box.top) / scale,
+          };
         });
         const childPoints = children.map((child) => {
           const rect = child.getBoundingClientRect();
-          return { x: rect.left - box.left + rect.width / 2, y: rect.top - box.top };
+          return {
+            x: (rect.left - box.left + rect.width / 2) / scale,
+            y: (rect.top - box.top) / scale,
+          };
         });
         const couple = parents.length === 2 ? parents[0].closest<HTMLElement>('.couple') : null;
         const coupleLine =
@@ -40,8 +96,8 @@ export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person
         if (coupleLine) {
           const line = coupleLine.getBoundingClientRect();
           coupleAnchor = {
-            x: line.left - box.left + line.width / 2,
-            y: line.top - box.top + line.height / 2,
+            x: (line.left - box.left + line.width / 2) / scale,
+            y: (line.top - box.top + line.height / 2) / scale,
           };
         }
         next.push(buildConnectorPath(parentPoints, childPoints, coupleAnchor));
@@ -51,7 +107,83 @@ export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person
     requestAnimationFrame(draw);
     window.addEventListener('resize', draw);
     return () => window.removeEventListener('resize', draw);
-  }, [tree]);
+  }, [visible, view.scale]);
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = section.getBoundingClientRect();
+      const originX = event.clientX - rect.left;
+      const originY = event.clientY - rect.top;
+      const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+      setView((current) => {
+        const scale = clampScale(current.scale * factor);
+        const ratio = scale / current.scale;
+        return {
+          scale,
+          x: originX - (originX - current.x) * ratio,
+          y: originY - (originY - current.y) * ratio,
+        };
+      });
+    };
+    // React registers wheel listeners passively, so zooming attaches natively
+    // to be able to call preventDefault and stop the page from scrolling.
+    section.addEventListener('wheel', onWheel, { passive: false });
+    return () => section.removeEventListener('wheel', onWheel);
+  }, []);
+  function zoomFromCenter(factor: number) {
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const originX = rect.width / 2;
+    const originY = rect.height / 2;
+    setView((current) => {
+      const scale = clampScale(current.scale * factor);
+      const ratio = scale / current.scale;
+      return {
+        scale,
+        x: originX - (originX - current.x) * ratio,
+        y: originY - (originY - current.y) * ratio,
+      };
+    });
+  }
+  function onPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    if (event.button !== 0) return;
+    if ((event.target as HTMLElement).closest('.tree-controls, .focus-banner')) return;
+    drag.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: view.x,
+      originY: view.y,
+    };
+    dragged.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function onPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const state = drag.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - state.startX;
+    const deltaY = event.clientY - state.startY;
+    if (Math.abs(deltaX) + Math.abs(deltaY) > 4) dragged.current = true;
+    if (dragged.current)
+      setView((current) => ({
+        ...current,
+        x: state.originX + deltaX,
+        y: state.originY + deltaY,
+      }));
+  }
+  function onPointerUp(event: ReactPointerEvent<HTMLElement>) {
+    if (drag.current?.pointerId === event.pointerId) drag.current = null;
+  }
+  // After a pan, swallow the click so releasing over a person card does not
+  // open that person.
+  function onClickCapture(event: ReactMouseEvent<HTMLElement>) {
+    if (!dragged.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragged.current = false;
+  }
   const card = (p: Person) => {
     const siblingLinks = [...p.siblingLinksA, ...p.siblingLinksB];
     const siblingNames = siblingLinks
@@ -91,7 +223,7 @@ export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person
   };
   return (
     <section
-      ref={treeRef}
+      ref={sectionRef}
       className={`tree-space ${tree.backgroundStyle}`}
       style={
         {
@@ -100,71 +232,103 @@ export function TreeView({ tree, onEdit }: { tree: Tree; onEdit: (person: Person
           '--accent': tree.accentColor,
         } as CSSProperties
       }
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onClickCapture={onClickCapture}
     >
-      <div className="tree-art" />
-      <svg
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          overflow: 'visible',
-          pointerEvents: 'none',
-        }}
+      <div
+        ref={canvasRef}
+        className="tree-canvas"
+        style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
       >
-        {paths.map((path, index) => (
-          <path
-            d={path}
-            key={index}
-            fill="none"
-            stroke={tree.treeColor}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ))}
-      </svg>
-      {generations.map(([n, people]) => {
-        const rendered = new Set<string>();
-        return (
-          <div className="generation" key={n}>
-            {people.map((p) => {
-              if (rendered.has(p.id)) return null;
-              const link = [...p.partnershipsA, ...p.partnershipsB].find(
-                (x) => x.status === 'married' || x.status === 'partnered',
-              );
-              const partner =
-                link &&
-                people.find(
-                  (x) => x.id === (link.partnerAId === p.id ? link.partnerBId : link.partnerAId),
+        <div className="tree-art" />
+        <svg
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            overflow: 'visible',
+            pointerEvents: 'none',
+          }}
+        >
+          {paths.map((path, index) => (
+            <path
+              d={path}
+              key={index}
+              fill="none"
+              stroke={tree.treeColor}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+        </svg>
+        {generations.map(([n, people]) => {
+          const rendered = new Set<string>();
+          return (
+            <div className="generation" key={n}>
+              {people.map((p) => {
+                if (rendered.has(p.id)) return null;
+                const link = [...p.partnershipsA, ...p.partnershipsB].find(
+                  (x) => x.status === 'married' || x.status === 'partnered',
                 );
-              rendered.add(p.id);
-              if (partner) {
-                rendered.add(partner.id);
-                const married = link.status === 'married' || Boolean(link.marriageDate);
-                return (
-                  <div className="couple" key={p.id}>
-                    {card(p)}
-                    <span className="couple-connection">
-                      <span className="couple-label">
-                        <strong>{married ? 'Married' : 'Partners'}</strong>
-                        {link.marriageDate && (
-                          <time dateTime={inputDate(link.marriageDate)}>
-                            {displayDate(link.marriageDate)}
-                          </time>
-                        )}
+                const partner =
+                  link &&
+                  people.find(
+                    (x) => x.id === (link.partnerAId === p.id ? link.partnerBId : link.partnerAId),
+                  );
+                rendered.add(p.id);
+                if (partner) {
+                  rendered.add(partner.id);
+                  const married = link.status === 'married' || Boolean(link.marriageDate);
+                  return (
+                    <div className="couple" key={p.id}>
+                      {card(p)}
+                      <span className="couple-connection">
+                        <span className="couple-label">
+                          <strong>{married ? 'Married' : 'Partners'}</strong>
+                          {link.marriageDate && (
+                            <time dateTime={inputDate(link.marriageDate)}>
+                              {displayDate(link.marriageDate)}
+                            </time>
+                          )}
+                        </span>
                       </span>
-                    </span>
-                    {card(partner)}
-                  </div>
-                );
-              }
-              return card(p);
-            })}
-          </div>
-        );
-      })}
+                      {card(partner)}
+                    </div>
+                  );
+                }
+                return card(p);
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div className="tree-controls">
+        <button type="button" aria-label="Zoom in" onClick={() => zoomFromCenter(1.25)}>
+          ＋
+        </button>
+        <button type="button" aria-label="Zoom out" onClick={() => zoomFromCenter(0.8)}>
+          −
+        </button>
+        <button type="button" aria-label="Reset view" onClick={() => setView(HOME_VIEW)}>
+          ⌂
+        </button>
+      </div>
+      {focusPerson && (
+        <div className="focus-banner">
+          <span>
+            Showing the family of <strong>{focusPerson.name}</strong>
+          </span>
+          <button type="button" onClick={onClearFocus}>
+            Show everyone
+          </button>
+        </div>
+      )}
     </section>
   );
 }

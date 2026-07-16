@@ -22,6 +22,7 @@ export function KinfolkApp({
   const [viewer, setViewer] = useState<Person | false>(false);
   const [editor, setEditor] = useState<Person | null | false>(false);
   const [settings, setSettings] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [importError, setImportError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,7 @@ export function KinfolkApp({
         { id: created.id, name: created.name, _count: { people: created.people.length } },
         ...current.filter((item) => item.id !== created.id),
       ]);
+      setFocusId(null);
       setTree(created);
     } catch (x) {
       setError((x as Error).message);
@@ -68,6 +70,7 @@ export function KinfolkApp({
     setBusy(true);
     setError('');
     setViewer(false);
+    setFocusId(null);
     try {
       setTree(await api<Tree>(`/api/trees/${id}`));
     } catch (x) {
@@ -204,7 +207,12 @@ export function KinfolkApp({
         </strong>
       </section>
       {tree.people.length ? (
-        <TreeView tree={tree} onEdit={(p) => setViewer(p)} />
+        <TreeView
+          tree={tree}
+          focusId={focusId}
+          onEdit={(p) => setViewer(p)}
+          onClearFocus={() => setFocusId(null)}
+        />
       ) : (
         <section className="tree-space empty-tree">
           <strong>This tree is ready to grow</strong>
@@ -217,6 +225,10 @@ export function KinfolkApp({
           tree={tree}
           person={viewer}
           onClose={() => setViewer(false)}
+          onFocus={() => {
+            setFocusId(viewer.id);
+            setViewer(false);
+          }}
           onEdit={() => {
             setEditor(viewer);
             setViewer(false);
@@ -240,6 +252,7 @@ export function KinfolkApp({
             setSettings(false);
             setViewer(false);
             setEditor(false);
+            setFocusId(null);
             setTree(imported);
             void load();
           }}

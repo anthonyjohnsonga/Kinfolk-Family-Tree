@@ -7,11 +7,13 @@ export function PersonDetails({
   tree,
   person,
   onEdit,
+  onFocus,
   onClose,
 }: {
   tree: Tree;
   person: Person;
   onEdit: () => void;
+  onFocus: () => void;
   onClose: () => void;
 }) {
   const names = (ids: string[]) =>
@@ -164,6 +166,9 @@ export function PersonDetails({
           )}
         </section>
         <footer>
+          <button type="button" className="secondary" onClick={onFocus}>
+            Focus tree
+          </button>
           <span />
           <button type="button" className="secondary" onClick={onClose}>
             Close

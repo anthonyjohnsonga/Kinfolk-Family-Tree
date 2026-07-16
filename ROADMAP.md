@@ -10,6 +10,7 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 | 4 | GEDCOM import and export | Complete (`v0.0.5`) | Use an open genealogy interchange format to avoid data lock-in. |
 | 5 | Explicit links between related family trees | Planned | Link people and trees deliberately instead of matching surnames automatically. |
 | 6 | Multiple users, permissions, and audit history | Planned | Add administrators, editors, read-only access, and change history. |
+| 7 | Tree navigation: pan, zoom, and focus | Complete (unreleased) | Treat the tree as a navigable canvas and focus on one person's direct family. |
 
 ## Design principles
 

@@ -54,6 +54,54 @@ export function computeGenerations(people: Person[]): [number, Person[]][] {
   return [...map.entries()].sort(([a], [b]) => a - b);
 }
 
+// Returns the people to display when the tree is focused on one person: their
+// ancestors, their descendants, plus one hop of context — partners and parents
+// of anyone already shown — so couples and shared-child connectors stay
+// complete. An unknown focus id returns everyone.
+export function focusPeople(people: Person[], focusId: string): Person[] {
+  const byId = new Map(people.map((person) => [person.id, person]));
+  if (!byId.has(focusId)) return people;
+  const childIds = new Map<string, string[]>();
+  people.forEach((person) =>
+    person.parentLinks.forEach((link) =>
+      childIds.set(link.parentId, [...(childIds.get(link.parentId) || []), person.id]),
+    ),
+  );
+  const included = new Set([focusId]);
+  const queueUp = [focusId];
+  while (queueUp.length) {
+    const person = byId.get(queueUp.pop()!);
+    person?.parentLinks.forEach((link) => {
+      if (byId.has(link.parentId) && !included.has(link.parentId)) {
+        included.add(link.parentId);
+        queueUp.push(link.parentId);
+      }
+    });
+  }
+  const queueDown = [focusId];
+  while (queueDown.length) {
+    (childIds.get(queueDown.pop()!) || []).forEach((childId) => {
+      if (!included.has(childId)) {
+        included.add(childId);
+        queueDown.push(childId);
+      }
+    });
+  }
+  const context = new Set<string>();
+  included.forEach((id) => {
+    const person = byId.get(id)!;
+    [...person.partnershipsA, ...person.partnershipsB].forEach((link) => {
+      const other = link.partnerAId === id ? link.partnerBId : link.partnerAId;
+      if (byId.has(other)) context.add(other);
+    });
+    person.parentLinks.forEach((link) => {
+      if (byId.has(link.parentId)) context.add(link.parentId);
+    });
+  });
+  context.forEach((id) => included.add(id));
+  return people.filter((person) => included.has(person.id));
+}
+
 // Groups children by their exact (deduplicated, sorted) set of parent ids so
 // each family draws one shared connector.
 export function groupFamilies(people: Person[]): Family[] {
