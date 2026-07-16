@@ -161,6 +161,58 @@
   max-width: 560px;
 }
 
+.modal.people-index {
+  max-width: 540px;
+}
+
+.people-count {
+  margin: 8px 0 12px;
+  color: #68786f;
+  font-size: 12px;
+}
+
+.people-list {
+  display: grid;
+  gap: 6px;
+  max-height: 52vh;
+  margin: 0;
+  padding: 0 2px 2px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.people-list button {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #e1e5de;
+  border-radius: 10px;
+  background: #f8faf6;
+  color: #183128;
+  font-weight: 400;
+  text-align: left;
+}
+
+.people-list button:hover {
+  border-color: #2d654d;
+}
+
+.people-list strong {
+  font: 600 15px Georgia, serif;
+}
+
+.people-list em {
+  color: #68786f;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.people-list span {
+  color: #68786f;
+  font-size: 12px;
+}
+
 .settings-tabs {
   display: flex;
   gap: 8px;

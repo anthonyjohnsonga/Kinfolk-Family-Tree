@@ -452,6 +452,7 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 - View person details and record birth/death places and structured life events
 - Connect up to two parents and render multiple generations
 - Pan, zoom, and focus the tree on one person's direct family
+- Search every person by name, maiden name, or place and jump to their details
 - Connect couples with partnership status and marriage dates, including divorces, widowhood, and remarriages
 - Add full, half, step, adopted, and general sibling relationships
 - Customize and persist each tree's style and colors from the Settings area

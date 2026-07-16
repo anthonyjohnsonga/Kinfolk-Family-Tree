@@ -8,6 +8,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 - Navigate the tree like a canvas: drag to pan, zoom with the mouse wheel or on-screen controls, and reset the view with one click.
 - Focus the tree on one person from their details view, showing only their ancestors, descendants, and immediate partners, with a banner to return to the full tree.
+- Find anyone instantly with the new people index: search by name, maiden name, or place from the toolbar (or Ctrl/Cmd+K) and jump straight to a person's details.
 
 ## [0.0.5] - 2026-07-15
 

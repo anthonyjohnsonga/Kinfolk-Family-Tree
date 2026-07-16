@@ -6,6 +6,7 @@ import { TreeView } from './TreeView';
 import { PersonDetails } from './PersonDetails';
 import { PersonEditor } from './PersonEditor';
 import { Settings } from './Settings';
+import { PeopleIndex } from './PeopleIndex';
 import { GedcomImportButton } from './GedcomImportButton';
 
 export function KinfolkApp({
@@ -22,6 +23,7 @@ export function KinfolkApp({
   const [viewer, setViewer] = useState<Person | false>(false);
   const [editor, setEditor] = useState<Person | null | false>(false);
   const [settings, setSettings] = useState(false);
+  const [finder, setFinder] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [importError, setImportError] = useState('');
@@ -41,6 +43,17 @@ export function KinfolkApp({
   useEffect(() => {
     void load();
   }, []);
+  useEffect(() => {
+    if (!tree) return;
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setFinder((current) => !current);
+      }
+    };
+    window.addEventListener('keydown', shortcut);
+    return () => window.removeEventListener('keydown', shortcut);
+  }, [tree]);
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -186,6 +199,9 @@ export function KinfolkApp({
               ))}
             </select>
           </label>
+          <button className="secondary" onClick={() => setFinder(true)}>
+            Find person
+          </button>
           <button onClick={() => setEditor(null)}>＋ Add person</button>
           <button className="auth-logout secondary" onClick={onLogout} disabled={logoutBusy}>
             Sign out · {username}
@@ -219,6 +235,16 @@ export function KinfolkApp({
           <p>Add its first person to begin.</p>
           <button onClick={() => setEditor(null)}>Add first person</button>
         </section>
+      )}
+      {finder && (
+        <PeopleIndex
+          tree={tree}
+          onClose={() => setFinder(false)}
+          onSelect={(person) => {
+            setFinder(false);
+            setViewer(person);
+          }}
+        />
       )}
       {viewer && (
         <PersonDetails
