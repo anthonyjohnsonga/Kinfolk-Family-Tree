@@ -453,6 +453,7 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 - Connect up to two parents and render multiple generations
 - Pan, zoom, and focus the tree on one person's direct family
 - Search every person by name, maiden name, or place and jump to their details
+- Calculate how any two people are related, including cousins and removal
 - Connect couples with partnership status and marriage dates, including divorces, widowhood, and remarriages
 - Add full, half, step, adopted, and general sibling relationships
 - Customize and persist each tree's style and colors from the Settings area

@@ -12,6 +12,7 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 | 6 | Multiple users, permissions, and audit history | Planned | Add administrators, editors, read-only access, and change history. |
 | 7 | Tree navigation: pan, zoom, and focus | Complete (unreleased) | Treat the tree as a navigable canvas and focus on one person's direct family. |
 | 8 | People search and index | Complete (unreleased) | Find any person by name, maiden name, or place and open their details. |
+| 9 | Relationship calculator | Complete (unreleased) | Explain how any two people are related through their nearest shared ancestor. |
 
 ## Design principles
 

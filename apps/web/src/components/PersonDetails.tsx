@@ -1,6 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate } from '../format';
+import { describeRelationship } from '../relationship';
 import { eventLabel } from './LifeEventManager';
 
 export function PersonDetails({
@@ -16,6 +17,10 @@ export function PersonDetails({
   onFocus: () => void;
   onClose: () => void;
 }) {
+  const [relativeId, setRelativeId] = useState('');
+  const others = [...tree.people]
+    .filter((candidate) => candidate.id !== person.id)
+    .sort((left, right) => left.name.localeCompare(right.name));
   const names = (ids: string[]) =>
     ids
       .map((id) => tree.people.find((candidate) => candidate.id === id)?.name)
@@ -165,6 +170,31 @@ export function PersonDetails({
             <p>No life events recorded.</p>
           )}
         </section>
+        {others.length > 0 && (
+          <section className="detail-section">
+            <h3>Relationship calculator</h3>
+            <label className="relationship-picker">
+              How is {person.name} related to…
+              <select
+                aria-label="Person to compare with"
+                value={relativeId}
+                onChange={(event) => setRelativeId(event.target.value)}
+              >
+                <option value="">Select a person</option>
+                {others.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {relativeId && (
+              <p className="relationship-result">
+                {describeRelationship(tree.people, person.id, relativeId)}
+              </p>
+            )}
+          </section>
+        )}
         <footer>
           <button type="button" className="secondary" onClick={onFocus}>
             Focus tree

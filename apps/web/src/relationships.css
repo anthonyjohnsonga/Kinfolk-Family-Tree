@@ -213,6 +213,33 @@
   font-size: 12px;
 }
 
+.relationship-picker {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #52655b;
+}
+
+.relationship-picker select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #d7ddd4;
+  border-radius: 9px;
+  background: white;
+  color: #183128;
+  font-weight: 400;
+}
+
+.detail-section p.relationship-result {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eff4ec;
+  color: #183128;
+  font-weight: 600;
+}
+
 .settings-tabs {
   display: flex;
   gap: 8px;
