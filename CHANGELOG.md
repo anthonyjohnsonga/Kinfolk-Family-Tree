@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+### Fixed
+
+- Restore clicking a person card in the tree to open their details, which the pan-and-zoom canvas had broken by capturing the pointer before a real drag started.
+
 ### Added
 
 - Print the tree as a poster — or save it as a PDF — from Settings, automatically scaled to fit one landscape page with the tree name and date. Focusing the tree first prints just that person's branch.

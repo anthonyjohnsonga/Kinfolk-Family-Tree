@@ -178,14 +178,19 @@ export function TreeView({
       originY: view.y,
     };
     dragged.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
   function onPointerMove(event: ReactPointerEvent<HTMLElement>) {
     const state = drag.current;
     if (!state || state.pointerId !== event.pointerId) return;
     const deltaX = event.clientX - state.startX;
     const deltaY = event.clientY - state.startY;
-    if (Math.abs(deltaX) + Math.abs(deltaY) > 4) dragged.current = true;
+    if (!dragged.current && Math.abs(deltaX) + Math.abs(deltaY) > 4) {
+      dragged.current = true;
+      // Capture the pointer only once a real pan starts. Capturing on
+      // pointerdown retargets the eventual click to this section, which
+      // stopped person cards from ever receiving their click.
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     if (dragged.current)
       setView((current) => ({
         ...current,
@@ -194,7 +199,12 @@ export function TreeView({
       }));
   }
   function onPointerUp(event: ReactPointerEvent<HTMLElement>) {
-    if (drag.current?.pointerId === event.pointerId) drag.current = null;
+    if (drag.current?.pointerId !== event.pointerId) return;
+    drag.current = null;
+    // Any click this gesture produces fires immediately after pointerup, so
+    // clearing the flag afterwards keeps a stray drag from swallowing the
+    // next unrelated click.
+    if (dragged.current) setTimeout(() => (dragged.current = false), 0);
   }
   // After a pan, swallow the click so releasing over a person card does not
   // open that person.
