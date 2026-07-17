@@ -9,7 +9,10 @@ export type {
   SiblingLink,
   Tree,
   TreeSummary,
+  UserAccount,
 } from '@kinfolk/api/contract';
+
+export type SessionUser = { id: string; username: string; role: string };
 
 export type SiblingDraft = { personId: string; type: string };
 export type PartnershipDraft = {

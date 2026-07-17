@@ -64,7 +64,7 @@ export function App() {
         </div>
       </main>
     );
-  if (!status.authenticated)
+  if (!status.authenticated || !status.user)
     return (
       <main className="auth-page">
         <section className="auth-card">
@@ -132,11 +132,5 @@ export function App() {
         </section>
       </main>
     );
-  return (
-    <KinfolkApp
-      username={status.user?.username || 'admin'}
-      onLogout={() => void logout()}
-      logoutBusy={busy}
-    />
-  );
+  return <KinfolkApp user={status.user} onLogout={() => void logout()} logoutBusy={busy} />;
 }

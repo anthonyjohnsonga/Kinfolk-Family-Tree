@@ -3,6 +3,13 @@ import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } fr
 import { promisify } from 'node:util';
 import { db } from './db.js';
 
+export type SessionUser = { id: string; username: string; role: string };
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: SessionUser;
+  }
+}
+
 const scrypt = promisify(scryptCallback);
 const SESSION_COOKIE = 'kinfolk_session';
 const SESSION_DAYS = Math.max(1, Number(process.env.SESSION_DAYS || 7));
@@ -14,7 +21,7 @@ const cookieOptions = {
   maxAge: SESSION_DAYS * 86400,
 };
 const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16);
   const derived = (await scrypt(password, salt, 64)) as Buffer;
   return `scrypt$${salt.toString('base64url')}$${derived.toString('base64url')}`;

@@ -4,6 +4,7 @@ import { db } from './db.js';
 import { currentUser, registerAuthRoutes } from './auth.js';
 import { registerTreeRoutes } from './trees.js';
 import { registerPeopleRoutes } from './people.js';
+import { registerUserRoutes } from './users.js';
 
 const app = Fastify({ logger: true, bodyLimit: 1_000_000 });
 await app.register(cookie);
@@ -21,9 +22,15 @@ app.addHook('preHandler', async (request, reply) => {
   if (!request.url.startsWith('/api/') || request.url.startsWith('/api/auth/')) return;
   const user = await currentUser(request);
   if (!user) return reply.code(401).send({ message: 'Authentication required' });
+  request.user = user;
+  if (request.url.startsWith('/api/users') && user.role !== 'admin')
+    return reply.code(403).send({ message: 'Administrator access required' });
+  if (request.method !== 'GET' && user.role === 'viewer')
+    return reply.code(403).send({ message: 'Your account has read-only access' });
 });
 registerTreeRoutes(app);
 registerPeopleRoutes(app);
+registerUserRoutes(app);
 app.setErrorHandler((error: FastifyError, _request, reply) => {
   app.log.error(error);
   reply

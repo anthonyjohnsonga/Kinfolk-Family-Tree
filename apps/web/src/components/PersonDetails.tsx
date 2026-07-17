@@ -7,12 +7,14 @@ import { eventLabel } from './LifeEventManager';
 export function PersonDetails({
   tree,
   person,
+  canEdit,
   onEdit,
   onFocus,
   onClose,
 }: {
   tree: Tree;
   person: Person;
+  canEdit: boolean;
   onEdit: () => void;
   onFocus: () => void;
   onClose: () => void;
@@ -203,9 +205,11 @@ export function PersonDetails({
           <button type="button" className="secondary" onClick={onClose}>
             Close
           </button>
-          <button type="button" onClick={onEdit}>
-            Edit person
-          </button>
+          {canEdit && (
+            <button type="button" onClick={onEdit}>
+              Edit person
+            </button>
+          )}
         </footer>
       </article>
     </div>

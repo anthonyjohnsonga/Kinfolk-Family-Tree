@@ -1,25 +1,32 @@
 import { useState, type FormEvent } from 'react';
-import type { Tree } from '../types';
+import type { SessionUser, Tree } from '../types';
 import { api } from '../api';
 import { Status } from './Status';
 import { GedcomImportButton } from './GedcomImportButton';
+import { UserManager } from './UserManager';
+
+type SettingsTab = 'design' | 'data' | 'users';
 
 export function Settings({
   tree,
+  user,
   onSaved,
   onImported,
   onClose,
 }: {
   tree: Tree;
+  user: SessionUser;
   onSaved: (tree: Tree) => void;
   onImported: (tree: Tree) => void;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<'design' | 'data'>('design');
+  const canEdit = user.role !== 'viewer';
+  const isAdmin = user.role === 'admin';
+  const [tab, setTab] = useState<SettingsTab>(canEdit ? 'design' : 'data');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  function open(next: 'design' | 'data') {
+  function open(next: SettingsTab) {
     setTab(next);
     setError('');
     setNotice('');
@@ -75,15 +82,17 @@ export function Settings({
           </button>
         </header>
         <div className="settings-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'design'}
-            className={tab === 'design' ? '' : 'secondary'}
-            onClick={() => open('design')}
-          >
-            Design
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'design'}
+              className={tab === 'design' ? '' : 'secondary'}
+              onClick={() => open('design')}
+            >
+              Design
+            </button>
+          )}
           <button
             type="button"
             role="tab"
@@ -91,10 +100,23 @@ export function Settings({
             className={tab === 'data' ? '' : 'secondary'}
             onClick={() => open('data')}
           >
-            Export & import
+            {canEdit ? 'Export & import' : 'Export'}
           </button>
+          {isAdmin && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'users'}
+              className={tab === 'users' ? '' : 'secondary'}
+              onClick={() => open('users')}
+            >
+              Users
+            </button>
+          )}
         </div>
-        {tab === 'design' ? (
+        {tab === 'users' ? (
+          <UserManager me={user} />
+        ) : tab === 'design' ? (
           <form onSubmit={submitDesign}>
             <div className="form-grid">
               <label className="full">
@@ -154,22 +176,24 @@ export function Settings({
                 {busy ? 'Working…' : 'Download GEDCOM file'}
               </button>
             </section>
-            <section>
-              <h3>Import a tree</h3>
-              <p>
-                Import a GEDCOM file as a new tree. Existing trees are never changed by an import.
-              </p>
-              <GedcomImportButton
-                label="Choose GEDCOM file…"
-                className="secondary"
-                disabled={busy}
-                onImported={onImported}
-                onError={(message) => {
-                  setError(message);
-                  setNotice('');
-                }}
-              />
-            </section>
+            {canEdit && (
+              <section>
+                <h3>Import a tree</h3>
+                <p>
+                  Import a GEDCOM file as a new tree. Existing trees are never changed by an import.
+                </p>
+                <GedcomImportButton
+                  label="Choose GEDCOM file…"
+                  className="secondary"
+                  disabled={busy}
+                  onImported={onImported}
+                  onError={(message) => {
+                    setError(message);
+                    setNotice('');
+                  }}
+                />
+              </section>
+            )}
             {error && <Status message={error} />}
             {notice && <p className="notice">{notice}</p>}
             <footer>

@@ -213,6 +213,65 @@
   font-size: 12px;
 }
 
+.user-manager {
+  display: grid;
+  gap: 14px;
+}
+
+.user-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.user-list li {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(120px, 0.9fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid #e1e5de;
+  border-radius: 10px;
+  background: #f8faf6;
+}
+
+.user-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-list em {
+  color: #68786f;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.user-list button {
+  padding: 9px 11px;
+}
+
+.user-add {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e1e5de;
+  border-radius: 12px;
+  background: #f8faf6;
+}
+
+.user-add h3 {
+  margin: 0;
+  font: 600 15px Georgia, serif;
+}
+
+@media (max-width: 700px) {
+  .user-list li {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .relationship-picker {
   display: grid;
   gap: 6px;

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import type { Person, Tree, TreeSummary } from '../types';
+import type { Person, SessionUser, Tree, TreeSummary } from '../types';
 import { api } from '../api';
 import { Status } from './Status';
 import { TreeView } from './TreeView';
@@ -10,14 +10,15 @@ import { PeopleIndex } from './PeopleIndex';
 import { GedcomImportButton } from './GedcomImportButton';
 
 export function KinfolkApp({
-  username,
+  user,
   onLogout,
   logoutBusy,
 }: {
-  username: string;
+  user: SessionUser;
   onLogout: () => void;
   logoutBusy: boolean;
 }) {
+  const canEdit = user.role !== 'viewer';
   const [trees, setTrees] = useState<TreeSummary[]>([]);
   const [tree, setTree] = useState<Tree | null>(null);
   const [viewer, setViewer] = useState<Person | false>(false);
@@ -104,14 +105,23 @@ export function KinfolkApp({
             <p>Private family trees, stored on your own server.</p>
           </div>
           <section className="card">
-            <h2>Create a tree</h2>
-            <form onSubmit={create}>
-              <input name="treeName" required placeholder="Tree name" disabled={busy} />
-              <input name="personName" required placeholder="First person's name" disabled={busy} />
-              <input name="birthDate" type="date" disabled={busy} />
-              <button disabled={busy}>{busy ? 'Working…' : 'Create tree'}</button>
-            </form>
-            <hr />
+            {canEdit && (
+              <>
+                <h2>Create a tree</h2>
+                <form onSubmit={create}>
+                  <input name="treeName" required placeholder="Tree name" disabled={busy} />
+                  <input
+                    name="personName"
+                    required
+                    placeholder="First person's name"
+                    disabled={busy}
+                  />
+                  <input name="birthDate" type="date" disabled={busy} />
+                  <button disabled={busy}>{busy ? 'Working…' : 'Create tree'}</button>
+                </form>
+                <hr />
+              </>
+            )}
             <h3>Existing trees</h3>
             {loading ? (
               <div className="loading-state">
@@ -135,26 +145,34 @@ export function KinfolkApp({
             ) : (
               <div className="empty-message">
                 <strong>No trees yet</strong>
-                <p>Create your first tree using the form above.</p>
+                <p>
+                  {canEdit
+                    ? 'Create your first tree using the form above.'
+                    : 'Ask an editor or administrator to create the first tree.'}
+                </p>
               </div>
             )}
-            <hr />
-            <h3>Import a tree</h3>
-            <p className="relationship-empty">
-              Have a GEDCOM (.ged) file from Kinfolk or another genealogy app? Import it as a new
-              tree.
-            </p>
-            <GedcomImportButton
-              label="Import GEDCOM file…"
-              className="secondary"
-              disabled={busy}
-              onImported={(imported) => {
-                setTree(imported);
-                void load();
-              }}
-              onError={setImportError}
-            />
-            {importError && <Status message={importError} />}
+            {canEdit && (
+              <>
+                <hr />
+                <h3>Import a tree</h3>
+                <p className="relationship-empty">
+                  Have a GEDCOM (.ged) file from Kinfolk or another genealogy app? Import it as a
+                  new tree.
+                </p>
+                <GedcomImportButton
+                  label="Import GEDCOM file…"
+                  className="secondary"
+                  disabled={busy}
+                  onImported={(imported) => {
+                    setTree(imported);
+                    void load();
+                  }}
+                  onError={setImportError}
+                />
+                {importError && <Status message={importError} />}
+              </>
+            )}
           </section>
         </div>
       </main>
@@ -191,7 +209,7 @@ export function KinfolkApp({
                 } else void open(id);
               }}
             >
-              <option value="new">＋ Create a new tree</option>
+              {canEdit && <option value="new">＋ Create a new tree</option>}
               {treeChoices.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -202,9 +220,9 @@ export function KinfolkApp({
           <button className="secondary" onClick={() => setFinder(true)}>
             Find person
           </button>
-          <button onClick={() => setEditor(null)}>＋ Add person</button>
+          {canEdit && <button onClick={() => setEditor(null)}>＋ Add person</button>}
           <button className="auth-logout secondary" onClick={onLogout} disabled={logoutBusy}>
-            Sign out · {username}
+            Sign out · {user.username}
           </button>
           <button className="secondary" onClick={() => setSettings(true)}>
             ⚙ Settings
@@ -232,8 +250,8 @@ export function KinfolkApp({
       ) : (
         <section className="tree-space empty-tree">
           <strong>This tree is ready to grow</strong>
-          <p>Add its first person to begin.</p>
-          <button onClick={() => setEditor(null)}>Add first person</button>
+          <p>{canEdit ? 'Add its first person to begin.' : 'No people have been added yet.'}</p>
+          {canEdit && <button onClick={() => setEditor(null)}>Add first person</button>}
         </section>
       )}
       {finder && (
@@ -250,6 +268,7 @@ export function KinfolkApp({
         <PersonDetails
           tree={tree}
           person={viewer}
+          canEdit={canEdit}
           onClose={() => setViewer(false)}
           onFocus={() => {
             setFocusId(viewer.id);
@@ -272,6 +291,7 @@ export function KinfolkApp({
       {settings && (
         <Settings
           tree={tree}
+          user={user}
           onSaved={setTree}
           onClose={() => setSettings(false)}
           onImported={(imported) => {

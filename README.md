@@ -459,6 +459,7 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 - Customize and persist each tree's style and colors from the Settings area
 - Export trees as GEDCOM 5.5.1 files and import GEDCOM files as new trees
 - Protect all family data with first-run administrator setup and expiring server sessions
+- Add accounts for the whole family with administrator, editor, and read-only viewer roles
 
 ## Privacy
 
@@ -472,6 +473,8 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 ## Authentication settings
 
 `SESSION_DAYS` controls session lifetime and defaults to seven days. `COOKIE_SECURE` must remain `false` for plain internal HTTP. Set it to `true` when Kinfolk is served through HTTPS; secure cookies are not transmitted over plain HTTP.
+
+The first-run account is an administrator. Administrators can create additional accounts from Settings → Users with one of three roles: administrators manage accounts and all data, editors manage family data, and viewers have read-only access (including GEDCOM export). Kinfolk always keeps at least one administrator, and changing an account's password signs that account out everywhere.
 
 Authentication protects access to the application, but HTTPS is still required before exposing Kinfolk outside a trusted internal network.
 

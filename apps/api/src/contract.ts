@@ -3,6 +3,10 @@
 // "@kinfolk/api/contract" package export, so both sides stay in sync.
 // Dates cross the wire as ISO strings, so wire types use string, not Date.
 
+export const userRoles = ['admin', 'editor', 'viewer'] as const;
+export type UserRole = (typeof userRoles)[number];
+export type UserAccount = { id: string; username: string; role: string; createdAt: string };
+
 export const siblingTypes = ['sibling', 'full', 'half', 'step', 'adopted'] as const;
 export type SiblingType = (typeof siblingTypes)[number];
 export const lifeEventTypes = [
