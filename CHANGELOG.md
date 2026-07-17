@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+No changes yet.
+
+## [0.0.6] - 2026-07-16
+
 ### Added
 
 - Navigate the tree like a canvas: drag to pan, zoom with the mouse wheel or on-screen controls, and reset the view with one click.

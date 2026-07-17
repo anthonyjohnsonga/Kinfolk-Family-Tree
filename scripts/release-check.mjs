@@ -5,7 +5,7 @@ const version=process.argv[2];
 const fail=message=>{console.error(`Release check failed: ${message}`);process.exit(1)};
 const run=(command,args)=>execFileSync(command,args,{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
 
-if(!version||!/^v\d+\.\d+\.\d+$/.test(version)) fail('pass a stable semantic version such as v0.0.5');
+if(!version||!/^v\d+\.\d+\.\d+$/.test(version)) fail('pass a stable semantic version such as v0.0.6');
 
 const expectedName='anthonyjohnsonga';
 const expectedEmail='289307528+anthonyjohnsonga@users.noreply.github.com';

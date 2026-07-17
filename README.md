@@ -136,7 +136,7 @@ openssl rand -hex 32
 Create `.env`, replacing the example password with the generated value:
 
 ```dotenv
-KINFOLK_VERSION=0.0.5
+KINFOLK_VERSION=0.0.6
 
 POSTGRES_DB=kinfolk
 POSTGRES_USER=kinfolk
@@ -187,7 +187,7 @@ ls -lh database/backups/before-upgrade.dump
 Confirm the dump is non-empty. Then edit `/opt/kinfolk/.env` and change only `KINFOLK_VERSION` to the desired published version, for example:
 
 ```dotenv
-KINFOLK_VERSION=0.0.5
+KINFOLK_VERSION=0.0.6
 ```
 
 Pull and apply the update:
