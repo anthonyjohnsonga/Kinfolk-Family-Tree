@@ -218,6 +218,32 @@
   gap: 14px;
 }
 
+.account-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.account-panel h3 {
+  margin: 0;
+  font: 600 18px Georgia, serif;
+}
+
+.account-panel label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-panel footer {
+  display: flex;
+  margin-top: 4px;
+}
+
+.account-panel footer span {
+  flex: 1;
+}
+
 .user-list {
   display: grid;
   gap: 8px;

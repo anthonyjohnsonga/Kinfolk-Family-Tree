@@ -66,6 +66,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
   app.post<{ Body: { username: string; password: string } }>(
     '/api/auth/setup',
     {
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
       schema: {
         body: {
           type: 'object',
@@ -95,6 +96,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
   app.post<{ Body: { username: string; password: string } }>(
     '/api/auth/login',
     {
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
       schema: {
         body: {
           type: 'object',
@@ -118,6 +120,41 @@ export function registerAuthRoutes(app: FastifyInstance) {
         return reply.code(401).send({ message: 'Incorrect username or password' });
       await createSession(user.id, reply);
       return { user: { id: user.id, username: user.username, role: user.role } };
+    },
+  );
+  app.post<{ Body: { currentPassword: string; newPassword: string } }>(
+    '/api/auth/password',
+    {
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+      schema: {
+        body: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string', minLength: 1, maxLength: 128 },
+            newPassword: { type: 'string', minLength: 12, maxLength: 128 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      // /api/auth/* skips the global guard, so this route authenticates itself.
+      const token = request.cookies[SESSION_COOKIE];
+      const user = await currentUser(request);
+      if (!user || !token) return reply.code(401).send({ message: 'Authentication required' });
+      const account = await db.user.findUnique({ where: { id: user.id } });
+      if (!account || !(await verifyPassword(request.body.currentPassword, account.passwordHash)))
+        return reply.code(403).send({ message: 'The current password is incorrect' });
+      await db.user.update({
+        where: { id: account.id },
+        data: { passwordHash: await hashPassword(request.body.newPassword) },
+      });
+      // Sign out every other session but keep this one alive.
+      await db.session.deleteMany({
+        where: { userId: account.id, tokenHash: { not: tokenHash(token) } },
+      });
+      return reply.code(204).send();
     },
   );
   app.post('/api/auth/logout', async (request, reply) => {

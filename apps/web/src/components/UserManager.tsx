@@ -114,7 +114,10 @@ export function UserManager({ me }: { me: SessionUser }) {
             <button
               type="button"
               className="secondary"
-              disabled={busy}
+              disabled={busy || user.id === me.id}
+              title={
+                user.id === me.id ? 'Change your own password from the Account tab' : undefined
+              }
               onClick={() => resetPassword(user)}
             >
               Set password

@@ -4,8 +4,9 @@ import { api } from '../api';
 import { Status } from './Status';
 import { GedcomImportButton } from './GedcomImportButton';
 import { UserManager } from './UserManager';
+import { AccountPanel } from './AccountPanel';
 
-type SettingsTab = 'design' | 'data' | 'users';
+type SettingsTab = 'design' | 'data' | 'account' | 'users';
 
 export function Settings({
   tree,
@@ -102,6 +103,15 @@ export function Settings({
           >
             {canEdit ? 'Export & import' : 'Export'}
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'account'}
+            className={tab === 'account' ? '' : 'secondary'}
+            onClick={() => open('account')}
+          >
+            Account
+          </button>
           {isAdmin && (
             <button
               type="button"
@@ -116,6 +126,8 @@ export function Settings({
         </div>
         {tab === 'users' ? (
           <UserManager me={user} />
+        ) : tab === 'account' ? (
+          <AccountPanel />
         ) : tab === 'design' ? (
           <form onSubmit={submitDesign}>
             <div className="form-grid">

@@ -17,9 +17,10 @@
     "db:migrate": "prisma migrate deploy"
   },
   "dependencies": {
+    "@fastify/cookie": "latest",
+    "@fastify/rate-limit": "^11.1.0",
     "@prisma/adapter-pg": "latest",
     "@prisma/client": "latest",
-    "@fastify/cookie": "latest",
     "dotenv": "latest",
     "fastify": "latest",
     "pg": "latest"

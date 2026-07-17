@@ -11,6 +11,11 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 - Find anyone instantly with the new people index: search by name, maiden name, or place from the toolbar (or Ctrl/Cmd+K) and jump straight to a person's details.
 - Answer "how are we related?" with the relationship calculator in every person's details view: pick any other person to see the connection, from parents and half-siblings to second cousins once removed, including the shared ancestor.
 - Give every family member their own account: administrators manage users from the new Users tab in Settings, editors can change family data, and viewers get read-only access. The server enforces roles on every request, keeps at least one administrator at all times, and signs a user out everywhere when their password is changed.
+- Change your own password from the new Account tab in Settings; the current device stays signed in while every other session is signed out.
+
+### Security
+
+- Rate-limit sign-in, first-run setup, and password changes to slow down password guessing, using the real client address behind the bundled reverse proxy.
 
 ## [0.0.5] - 2026-07-15
 

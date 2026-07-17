@@ -476,6 +476,8 @@ The Vite server runs at <http://localhost:5173> and proxies API calls to port 30
 
 The first-run account is an administrator. Administrators can create additional accounts from Settings → Users with one of three roles: administrators manage accounts and all data, editors manage family data, and viewers have read-only access (including GEDCOM export). Kinfolk always keeps at least one administrator, and changing an account's password signs that account out everywhere.
 
+Every signed-in user can change their own password from Settings → Account, which keeps the current device signed in and signs out all other sessions. Sign-in, setup, and password changes are rate limited to slow down password guessing.
+
 Authentication protects access to the application, but HTTPS is still required before exposing Kinfolk outside a trusted internal network.
 
 ## Releases
