@@ -13,6 +13,7 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 | 7 | Tree navigation: pan, zoom, and focus | Complete (`v0.0.6`) | Treat the tree as a navigable canvas and focus on one person's direct family. |
 | 8 | People search and index | Complete (`v0.0.6`) | Find any person by name, maiden name, or place and open their details. |
 | 9 | Relationship calculator | Complete (`v0.0.6`) | Explain how any two people are related through their nearest shared ancestor. |
+| 10 | Printable tree poster | Complete (unreleased) | Print or save the tree as a one-page landscape poster, including focused branches. |
 
 ## Design principles
 

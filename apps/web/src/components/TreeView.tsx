@@ -27,11 +27,13 @@ const HOME_VIEW: View = { x: 0, y: 0, scale: 1 };
 export function TreeView({
   tree,
   focusId,
+  printMode = false,
   onEdit,
   onClearFocus,
 }: {
   tree: Tree;
   focusId: string | null;
+  printMode?: boolean;
   onEdit: (person: Person) => void;
   onClearFocus: () => void;
 }) {
@@ -39,6 +41,7 @@ export function TreeView({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [paths, setPaths] = useState<string[]>([]);
   const [view, setView] = useState<View>(HOME_VIEW);
+  const [printBox, setPrintBox] = useState({ scale: 1, height: 0 });
   const drag = useRef<{
     pointerId: number;
     startX: number;
@@ -56,8 +59,24 @@ export function TreeView({
   useEffect(() => {
     setView(HOME_VIEW);
   }, [tree.id, focusId]);
+  // Fit the whole tree into the space left below the heading on common Letter
+  // and A4 landscape pages. offsetWidth/Height ignore transforms, so this
+  // stays stable once the scale is applied.
   useEffect(() => {
-    const scale = view.scale;
+    if (!printMode) {
+      setPrintBox({ scale: 1, height: 0 });
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const scale = Math.min(1, 960 / canvas.offsetWidth, 600 / canvas.offsetHeight);
+      setPrintBox({ scale, height: canvas.offsetHeight * scale });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [printMode, visible]);
+  useEffect(() => {
+    const scale = printMode ? printBox.scale : view.scale;
     const draw = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -107,8 +126,9 @@ export function TreeView({
     requestAnimationFrame(draw);
     window.addEventListener('resize', draw);
     return () => window.removeEventListener('resize', draw);
-  }, [visible, view.scale]);
+  }, [visible, view.scale, printMode, printBox.scale]);
   useEffect(() => {
+    if (printMode) return;
     const section = sectionRef.current;
     if (!section) return;
     const onWheel = (event: WheelEvent) => {
@@ -131,7 +151,7 @@ export function TreeView({
     // to be able to call preventDefault and stop the page from scrolling.
     section.addEventListener('wheel', onWheel, { passive: false });
     return () => section.removeEventListener('wheel', onWheel);
-  }, []);
+  }, [printMode]);
   function zoomFromCenter(factor: number) {
     const rect = sectionRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -221,17 +241,105 @@ export function TreeView({
       </button>
     );
   };
+  const treeVars = {
+    '--tree-bg': tree.backgroundColor,
+    '--tree-color': tree.treeColor,
+    '--accent': tree.accentColor,
+  } as CSSProperties;
+  const canvasContent = (
+    <>
+      <div className="tree-art" />
+      <svg
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'visible',
+          pointerEvents: 'none',
+        }}
+      >
+        {paths.map((path, index) => (
+          <path
+            d={path}
+            key={index}
+            fill="none"
+            stroke={tree.treeColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ))}
+      </svg>
+      {generations.map(([n, people]) => {
+        const rendered = new Set<string>();
+        return (
+          <div className="generation" key={n}>
+            {people.map((p) => {
+              if (rendered.has(p.id)) return null;
+              const link = [...p.partnershipsA, ...p.partnershipsB].find(
+                (x) => x.status === 'married' || x.status === 'partnered',
+              );
+              const partner =
+                link &&
+                people.find(
+                  (x) => x.id === (link.partnerAId === p.id ? link.partnerBId : link.partnerAId),
+                );
+              rendered.add(p.id);
+              if (partner) {
+                rendered.add(partner.id);
+                const married = link.status === 'married' || Boolean(link.marriageDate);
+                return (
+                  <div className="couple" key={p.id}>
+                    {card(p)}
+                    <span className="couple-connection">
+                      <span className="couple-label">
+                        <strong>{married ? 'Married' : 'Partners'}</strong>
+                        {link.marriageDate && (
+                          <time dateTime={inputDate(link.marriageDate)}>
+                            {displayDate(link.marriageDate)}
+                          </time>
+                        )}
+                      </span>
+                    </span>
+                    {card(partner)}
+                  </div>
+                );
+              }
+              return card(p);
+            })}
+          </div>
+        );
+      })}
+    </>
+  );
+  if (printMode)
+    return (
+      <section className={`tree-space print-mode ${tree.backgroundStyle}`} style={treeVars}>
+        <div className="print-header">
+          <h1>{tree.name}</h1>
+          <p>
+            {focusPerson ? `The family of ${focusPerson.name} · ` : ''}Kinfolk family tree ·{' '}
+            {new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}
+          </p>
+        </div>
+        <div style={printBox.height ? { height: printBox.height, overflow: 'hidden' } : undefined}>
+          <div
+            ref={canvasRef}
+            className="tree-canvas"
+            style={{ transform: `scale(${printBox.scale})` }}
+          >
+            {canvasContent}
+          </div>
+        </div>
+      </section>
+    );
   return (
     <section
       ref={sectionRef}
       className={`tree-space ${tree.backgroundStyle}`}
-      style={
-        {
-          '--tree-bg': tree.backgroundColor,
-          '--tree-color': tree.treeColor,
-          '--accent': tree.accentColor,
-        } as CSSProperties
-      }
+      style={treeVars}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -243,70 +351,7 @@ export function TreeView({
         className="tree-canvas"
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
       >
-        <div className="tree-art" />
-        <svg
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            overflow: 'visible',
-            pointerEvents: 'none',
-          }}
-        >
-          {paths.map((path, index) => (
-            <path
-              d={path}
-              key={index}
-              fill="none"
-              stroke={tree.treeColor}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
-        </svg>
-        {generations.map(([n, people]) => {
-          const rendered = new Set<string>();
-          return (
-            <div className="generation" key={n}>
-              {people.map((p) => {
-                if (rendered.has(p.id)) return null;
-                const link = [...p.partnershipsA, ...p.partnershipsB].find(
-                  (x) => x.status === 'married' || x.status === 'partnered',
-                );
-                const partner =
-                  link &&
-                  people.find(
-                    (x) => x.id === (link.partnerAId === p.id ? link.partnerBId : link.partnerAId),
-                  );
-                rendered.add(p.id);
-                if (partner) {
-                  rendered.add(partner.id);
-                  const married = link.status === 'married' || Boolean(link.marriageDate);
-                  return (
-                    <div className="couple" key={p.id}>
-                      {card(p)}
-                      <span className="couple-connection">
-                        <span className="couple-label">
-                          <strong>{married ? 'Married' : 'Partners'}</strong>
-                          {link.marriageDate && (
-                            <time dateTime={inputDate(link.marriageDate)}>
-                              {displayDate(link.marriageDate)}
-                            </time>
-                          )}
-                        </span>
-                      </span>
-                      {card(partner)}
-                    </div>
-                  );
-                }
-                return card(p);
-              })}
-            </div>
-          );
-        })}
+        {canvasContent}
       </div>
       <div className="tree-controls">
         <button type="button" aria-label="Zoom in" onClick={() => zoomFromCenter(1.25)}>

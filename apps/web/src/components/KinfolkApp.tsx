@@ -25,6 +25,7 @@ export function KinfolkApp({
   const [editor, setEditor] = useState<Person | null | false>(false);
   const [settings, setSettings] = useState(false);
   const [finder, setFinder] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [importError, setImportError] = useState('');
@@ -55,6 +56,23 @@ export function KinfolkApp({
     window.addEventListener('keydown', shortcut);
     return () => window.removeEventListener('keydown', shortcut);
   }, [tree]);
+  // Print mode re-renders the tree unclipped and scaled to one page; the
+  // delay gives the connectors and fit calculation two frames to settle.
+  useEffect(() => {
+    if (!printing) return;
+    const done = () => setPrinting(false);
+    window.addEventListener('afterprint', done);
+    const timer = window.setTimeout(() => {
+      window.print();
+      // Some browsers do not dispatch afterprint; window.print() returns once
+      // their dialog closes, so this also guarantees the normal tree returns.
+      done();
+    }, 350);
+    return () => {
+      window.removeEventListener('afterprint', done);
+      window.clearTimeout(timer);
+    };
+  }, [printing]);
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -244,6 +262,7 @@ export function KinfolkApp({
         <TreeView
           tree={tree}
           focusId={focusId}
+          printMode={printing}
           onEdit={(p) => setViewer(p)}
           onClearFocus={() => setFocusId(null)}
         />
@@ -293,6 +312,10 @@ export function KinfolkApp({
           tree={tree}
           user={user}
           onSaved={setTree}
+          onPrint={() => {
+            setSettings(false);
+            setPrinting(true);
+          }}
           onClose={() => setSettings(false)}
           onImported={(imported) => {
             setSettings(false);

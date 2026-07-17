@@ -4,7 +4,9 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
-No changes yet.
+### Added
+
+- Print the tree as a poster — or save it as a PDF — from Settings, automatically scaled to fit one landscape page with the tree name and date. Focusing the tree first prints just that person's branch.
 
 ## [0.0.6] - 2026-07-16
 

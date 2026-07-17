@@ -76,6 +76,51 @@
   white-space: nowrap;
 }
 
+/* Print mode renders the tree unclipped and scaled to fit one landscape page. */
+.tree-space.print-mode {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  cursor: default;
+  touch-action: auto;
+  user-select: auto;
+}
+
+.print-header {
+  padding: 20px 20px 0;
+}
+
+.print-header h1 {
+  margin: 0;
+  font: 600 34px Georgia, serif;
+}
+
+.print-header p {
+  margin: 4px 0 0;
+  color: #68786f;
+}
+
+@page {
+  size: landscape;
+  margin: 10mm;
+}
+
+@media print {
+  .topbar,
+  .hero,
+  .overlay {
+    display: none !important;
+  }
+
+  .tree-space.print-mode {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 .person-card small + small {
   margin-top: 4px;
 }

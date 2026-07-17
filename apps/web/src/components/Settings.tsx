@@ -13,12 +13,14 @@ export function Settings({
   user,
   onSaved,
   onImported,
+  onPrint,
   onClose,
 }: {
   tree: Tree;
   user: SessionUser;
   onSaved: (tree: Tree) => void;
   onImported: (tree: Tree) => void;
+  onPrint: () => void;
   onClose: () => void;
 }) {
   const canEdit = user.role !== 'viewer';
@@ -186,6 +188,21 @@ export function Settings({
               </p>
               <button type="button" onClick={exportGedcom} disabled={busy}>
                 {busy ? 'Working…' : 'Download GEDCOM file'}
+              </button>
+            </section>
+            <section>
+              <h3>Print a poster</h3>
+              <p>
+                Print the tree — or save it as a PDF — scaled to fit one landscape page. Focus the
+                tree on a person first to print just their branch.
+              </p>
+              <button
+                type="button"
+                className="secondary"
+                onClick={onPrint}
+                disabled={busy || !tree.people.length}
+              >
+                Print or save as PDF…
               </button>
             </section>
             {canEdit && (
