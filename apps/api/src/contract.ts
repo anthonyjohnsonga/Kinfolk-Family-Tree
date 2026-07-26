@@ -24,6 +24,27 @@ export type LifeEventType = (typeof lifeEventTypes)[number];
 export const partnershipStatuses = ['partnered', 'married', 'divorced', 'widowed'] as const;
 export type PartnershipStatus = (typeof partnershipStatuses)[number];
 
+// Photos are stored in the database as bytes so they travel with backups.
+// Uploads arrive as base64 to stay within the JSON API; the client downscales
+// images first, so these limits are generous for portrait-sized photos.
+export const photoContentTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+export type PhotoContentType = (typeof photoContentTypes)[number];
+export const MAX_PHOTO_BYTES = 5_000_000;
+export const MAX_PHOTOS_PER_PERSON = 30;
+
+export type PhotoInput = { data: string; contentType: PhotoContentType; caption?: string };
+export type PhotoUpdate = { caption?: string | null; isPrimary?: boolean };
+// Wire shape returned with each person: metadata only, never the image bytes.
+// Fetch the bytes separately from GET /api/photos/:id.
+export type PhotoMeta = {
+  id: string;
+  contentType: string;
+  caption: string | null;
+  isPrimary: boolean;
+  order: number;
+  createdAt: string;
+};
+
 export type PartnershipInput = {
   personId: string;
   status: PartnershipStatus;
@@ -87,6 +108,7 @@ export type Person = {
   siblingLinksA: SiblingLink[];
   siblingLinksB: SiblingLink[];
   lifeEvents: LifeEvent[];
+  photos: PhotoMeta[];
 };
 export type Tree = {
   id: string;

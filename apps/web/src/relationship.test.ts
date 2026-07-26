@@ -18,6 +18,7 @@ const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   siblingLinksA: [],
   siblingLinksB: [],
   lifeEvents: [],
+  photos: [],
   ...overrides,
 });
 const child = (id: string, ...parents: string[]) =>

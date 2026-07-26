@@ -6,6 +6,7 @@ export type {
   ParentLink,
   Partnership,
   Person,
+  PhotoMeta,
   SiblingLink,
   Tree,
   TreeSummary,

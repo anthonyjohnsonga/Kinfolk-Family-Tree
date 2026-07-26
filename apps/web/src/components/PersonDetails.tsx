@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate } from '../format';
 import { describeRelationship } from '../relationship';
+import { photoUrl, primaryPhoto } from '../photo';
 import { eventLabel } from './LifeEventManager';
 
 export function PersonDetails({
@@ -47,6 +48,8 @@ export function PersonDetails({
         : status === 'widowed'
           ? 'Late spouse'
           : 'Partner';
+  const profile = primaryPhoto(person.photos);
+  const gallery = person.photos.filter((photo) => photo.id !== profile?.id);
   const siblings = names(
     [...person.siblingLinksA, ...person.siblingLinksB].map((link) =>
       link.siblingAId === person.id ? link.siblingBId : link.siblingAId,
@@ -101,6 +104,12 @@ export function PersonDetails({
             ×
           </button>
         </header>
+        {profile && (
+          <figure className="detail-portrait">
+            <img src={photoUrl(profile)} alt={profile.caption || person.name} />
+            {profile.caption && <figcaption>{profile.caption}</figcaption>}
+          </figure>
+        )}
         <div className="detail-facts">
           <div>
             <span>Born</span>
@@ -172,6 +181,19 @@ export function PersonDetails({
             <p>No life events recorded.</p>
           )}
         </section>
+        {gallery.length > 0 && (
+          <section className="detail-section">
+            <h3>Photos</h3>
+            <ul className="detail-gallery">
+              {gallery.map((photo) => (
+                <li key={photo.id}>
+                  <img src={photoUrl(photo)} alt={photo.caption || person.name} loading="lazy" />
+                  {photo.caption && <span>{photo.caption}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {others.length > 0 && (
           <section className="detail-section">
             <h3>Relationship calculator</h3>

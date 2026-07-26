@@ -5,6 +5,7 @@ import { inputDate } from '../format';
 import { PartnershipManager } from './PartnershipManager';
 import { SiblingManager } from './SiblingManager';
 import { LifeEventManager } from './LifeEventManager';
+import { PhotoManager } from './PhotoManager';
 
 export function PersonEditor({
   tree,
@@ -174,6 +175,11 @@ export function PersonEditor({
             About
             <textarea name="bio" rows={3} maxLength={2000} defaultValue={person?.bio || ''} />
           </label>
+          {person ? (
+            <PhotoManager personId={person.id} photos={person.photos} onSaved={onSaved} />
+          ) : (
+            <p className="full relationship-empty">Save this person to start adding photos.</p>
+          )}
         </div>
         {error && <p className="error">{error}</p>}
         <footer>

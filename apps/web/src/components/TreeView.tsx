@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { Person, Tree } from '../types';
 import { displayDate, inputDate, year } from '../format';
+import { photoUrl, primaryPhoto } from '../photo';
 import {
   buildConnectorPath,
   computeGenerations,
@@ -224,15 +225,22 @@ export function TreeView({
             ?.name.split(' ')[0],
       )
       .filter(Boolean);
+    const profile = primaryPhoto(p.photos);
     return (
       <button className="person-card" data-person={p.id} key={p.id} onClick={() => onEdit(p)}>
-        <b>
-          {p.name
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((x) => x[0])
-            .join('')}
-        </b>
+        {profile ? (
+          <b className="has-photo">
+            <img src={photoUrl(profile)} alt="" />
+          </b>
+        ) : (
+          <b>
+            {p.name
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((x) => x[0])
+              .join('')}
+          </b>
+        )}
         <h3>{p.name}</h3>
         {p.maidenName && <em>Born {p.maidenName}</em>}
         <p>

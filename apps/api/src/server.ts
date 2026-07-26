@@ -5,6 +5,7 @@ import { db } from './db.js';
 import { currentUser, registerAuthRoutes } from './auth.js';
 import { registerTreeRoutes } from './trees.js';
 import { registerPeopleRoutes } from './people.js';
+import { registerPhotoRoutes } from './photos.js';
 import { registerUserRoutes } from './users.js';
 
 // Trust exactly the bundled nginx hop so rate limiting sees the real client
@@ -20,7 +21,10 @@ app.get('/health', async () => {
 });
 registerAuthRoutes(app);
 app.addHook('onSend', async (request, reply, payload) => {
-  if (request.url.startsWith('/api/')) reply.header('Cache-Control', 'no-store');
+  // Photo bytes are immutable per id and set their own long-lived cache header;
+  // everything else under /api/ must not be cached.
+  const isPhoto = request.method === 'GET' && /^\/api\/photos\/[^/]+$/.test(request.url);
+  if (request.url.startsWith('/api/') && !isPhoto) reply.header('Cache-Control', 'no-store');
   return payload;
 });
 app.addHook('preHandler', async (request, reply) => {
@@ -35,6 +39,7 @@ app.addHook('preHandler', async (request, reply) => {
 });
 registerTreeRoutes(app);
 registerPeopleRoutes(app);
+registerPhotoRoutes(app);
 registerUserRoutes(app);
 app.setErrorHandler((error: FastifyError, _request, reply) => {
   app.log.error(error);

@@ -64,8 +64,24 @@ model Person {
   siblingLinksA      SiblingRelationship[] @relation("SiblingA")
   siblingLinksB      SiblingRelationship[] @relation("SiblingB")
   lifeEvents         LifeEvent[]
+  photos             Photo[]
 
   @@index([treeId])
+}
+
+model Photo {
+  id          String   @id @default(uuid()) @db.Uuid
+  personId    String   @db.Uuid
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  data        Bytes
+  contentType String
+  caption     String?
+  isPrimary   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([personId])
 }
 
 model LifeEvent {

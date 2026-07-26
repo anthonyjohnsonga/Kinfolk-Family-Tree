@@ -18,6 +18,7 @@ const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   siblingLinksA: [],
   siblingLinksB: [],
   lifeEvents: [],
+  photos: [],
   ...overrides,
 });
 const names = (people: Person[]) => people.map((match) => match.name);

@@ -1,4 +1,9 @@
-import { lifeEventTypes, partnershipStatuses, siblingTypes } from './contract.js';
+import {
+  lifeEventTypes,
+  partnershipStatuses,
+  photoContentTypes,
+  siblingTypes,
+} from './contract.js';
 
 export const personBodySchema = {
   type: 'object',
@@ -66,5 +71,27 @@ export const personBodySchema = {
     },
     siblingId: { type: 'string', format: 'uuid' },
     siblingType: { type: 'string', enum: siblingTypes },
+  },
+} as const;
+
+export const photoBodySchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['data', 'contentType'],
+  properties: {
+    // Base64 payload; the byte-length limit is enforced after decoding.
+    data: { type: 'string', minLength: 1, maxLength: 7_000_000 },
+    contentType: { type: 'string', enum: photoContentTypes },
+    caption: { type: 'string', maxLength: 200 },
+  },
+} as const;
+
+export const photoUpdateSchema = {
+  type: 'object',
+  additionalProperties: false,
+  minProperties: 1,
+  properties: {
+    caption: { type: ['string', 'null'], maxLength: 200 },
+    isPrimary: { type: 'boolean' },
   },
 } as const;
