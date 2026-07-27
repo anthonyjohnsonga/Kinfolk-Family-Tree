@@ -6,15 +6,15 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 |---:|---|---|---|
 | 1 | Complete relationship management | Complete (`v0.0.4`) | Add, edit, and remove multiple typed sibling relationships. |
 | 2 | Person details, life events, and locations | Complete (`v0.0.4`) | Person detail view, birth/death places, and structured timelines. |
-| 3 | Sources, citations, photographs, and documents | Partially complete (unreleased) | Photographs are done: upload a gallery per person with a chosen profile photo, stored in the database so backups include them. Sources, citations, and documents are still planned. |
+| 3 | Sources, citations, photographs, and documents | Partially complete (`v0.0.7`) | Photographs are done: upload a gallery per person with a chosen profile photo, stored in the database so backups include them. Sources, citations, and documents are still planned. |
 | 4 | GEDCOM import and export | Complete (`v0.0.5`) | Use an open genealogy interchange format to avoid data lock-in. |
 | 5 | Explicit links between related family trees | Planned | Link people and trees deliberately instead of matching surnames automatically. |
 | 6 | Multiple users, permissions, and audit history | Partially complete (`v0.0.6`) | Administrator, editor, and viewer roles with account management are done; change history is still planned. |
 | 7 | Tree navigation: pan, zoom, and focus | Complete (`v0.0.6`) | Treat the tree as a navigable canvas and focus on one person's direct family. |
 | 8 | People search and index | Complete (`v0.0.6`) | Find any person by name, maiden name, or place and open their details. |
 | 9 | Relationship calculator | Complete (`v0.0.6`) | Explain how any two people are related through their nearest shared ancestor. |
-| 10 | Printable tree poster | Complete (unreleased) | Print or save the tree as a one-page landscape poster, including focused branches. |
-| 11 | Partial and approximate dates | Complete (unreleased) | Record year-only, month, or full dates with optional circa/before/after qualifiers; precision survives display, sorting, and GEDCOM. |
+| 10 | Printable tree poster | Complete (`v0.0.7`) | Print or save the tree as a one-page landscape poster, including focused branches. |
+| 11 | Partial and approximate dates | Complete (`v0.0.7`) | Record year-only, month, or full dates with optional circa/before/after qualifiers; precision survives display, sorting, and GEDCOM. |
 
 ## Design principles
 
