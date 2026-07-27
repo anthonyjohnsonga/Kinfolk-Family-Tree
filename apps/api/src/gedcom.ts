@@ -5,6 +5,26 @@ import { partnershipStatuses, siblingTypes } from './contract.js';
 // underscore tags (_MAIDEN, _SIB, _STAT) so they survive a round trip while
 // remaining ignorable by other genealogy software. Design colors are not part
 // of GEDCOM and are not exported.
+//
+// Photos export as OBJE (multimedia) records with the image embedded as base64
+// in a custom _DATA sub-tag, so a single .ged file stays self-contained across
+// a Kinfolk round trip. Other software ignores the unknown embedded data.
+
+const PHOTO_FORMS: Record<string, string> = {
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+};
+const FORM_CONTENT_TYPES: Record<string, string> = {
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
+const photoForm = (contentType: string) => PHOTO_FORMS[contentType] || 'jpeg';
+const contentTypeForForm = (form: string) => FORM_CONTENT_TYPES[form] || 'image/jpeg';
 
 type PartnershipRecord = {
   partnerAId: string;
@@ -33,6 +53,7 @@ export type GedcomPerson = {
     place: string | null;
     description: string | null;
   }[];
+  photos: { data: Uint8Array; contentType: string; caption: string | null; isPrimary: boolean }[];
 };
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -125,6 +146,19 @@ export function buildGedcom(treeName: string, people: GedcomPerson[]): string {
       if (event.description) pushNote(2, event.description);
     });
     if (person.bio) pushNote(1, person.bio);
+    person.photos.forEach((photo) => {
+      const base64 = Buffer.from(photo.data).toString('base64');
+      if (!base64) return;
+      lines.push('1 OBJE');
+      lines.push(`2 FORM ${photoForm(photo.contentType)}`);
+      if (photo.caption) lines.push(`2 TITL ${clean(photo.caption)}`);
+      if (photo.isPrimary) lines.push('2 _PRIM Y');
+      // GEDCOM lines stay short, so split the base64 across CONC continuations
+      // that the parser rejoins with no separator.
+      (base64.match(/.{1,200}/g) || []).forEach((chunk, index) =>
+        lines.push(`${index === 0 ? '2 _DATA' : '3 CONC'} ${chunk}`),
+      );
+    });
     families.forEach((family, key) => {
       if (family.spouses.includes(person.id)) lines.push(`1 FAMS ${familyXref.get(key)}`);
       if (family.children.includes(person.id)) lines.push(`1 FAMC ${familyXref.get(key)}`);
@@ -177,6 +211,7 @@ export type ParsedPerson = {
   bio?: string;
   lifeEvents: ParsedLifeEvent[];
   siblings: { xref: string; type: string }[];
+  photos: { data: string; contentType: string; caption?: string; isPrimary: boolean }[];
 };
 export type ParsedFamily = {
   spouses: string[];
@@ -272,6 +307,7 @@ function parsePerson(node: GedcomNode): ParsedPerson {
     name: 'Unknown',
     lifeEvents: [],
     siblings: [],
+    photos: [],
   };
   node.children.forEach((item) => {
     if (item.tag === 'NAME' && person.name === 'Unknown')
@@ -301,6 +337,18 @@ function parsePerson(node: GedcomNode): ParsedPerson {
         date: isoDate(child(item, 'DATE')?.value || ''),
         place: clean(child(item, 'PLAC')?.value || '') || undefined,
         description: note ? nodeText(note).trim() || undefined : undefined,
+      });
+    } else if (item.tag === 'OBJE') {
+      // Only embedded photos (our _DATA base64) are imported; OBJE records that
+      // merely point at an external FILE cannot travel inside the .ged file.
+      const dataNode = child(item, '_DATA');
+      const data = dataNode ? nodeText(dataNode).replace(/\s+/g, '') : '';
+      if (!data) return;
+      person.photos.push({
+        data,
+        contentType: contentTypeForForm(clean(child(item, 'FORM')?.value || '').toLowerCase()),
+        caption: clean(child(item, 'TITL')?.value || '') || undefined,
+        isPrimary: Boolean(child(item, '_PRIM')),
       });
     }
   });

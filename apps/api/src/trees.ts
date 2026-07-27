@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
 import { date, ordered } from './utils.js';
-import { treeInclude } from './queries.js';
+import { treeInclude, gedcomInclude } from './queries.js';
 import { buildGedcom, parseGedcom } from './gedcom.js';
+import { decodePhoto } from './photos.js';
+import { MAX_PHOTOS_PER_PERSON, type PhotoContentType } from './contract.js';
 
 export function registerTreeRoutes(app: FastifyInstance) {
   app.get('/api/trees', async () =>
@@ -68,7 +70,7 @@ export function registerTreeRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/api/trees/:id/gedcom', async (request, reply) => {
     const tree = await db.familyTree.findUnique({
       where: { id: request.params.id },
-      include: treeInclude,
+      include: gedcomInclude,
     });
     if (!tree) return reply.code(404).send({ message: 'Tree not found' });
     const stem = tree.name
@@ -126,6 +128,46 @@ export function registerTreeRoutes(app: FastifyInstance) {
                   description: event.description?.slice(0, 1000) || null,
                 })),
               });
+            // Decode embedded photos first, skipping any the browser or another
+            // tool wrote in a way we cannot read, then keep at most the cap.
+            const photos: {
+              data: Uint8Array<ArrayBuffer>;
+              contentType: string;
+              caption?: string;
+              isPrimary: boolean;
+            }[] = [];
+            for (const photo of person.photos) {
+              if (photos.length >= MAX_PHOTOS_PER_PERSON) break;
+              try {
+                photos.push({
+                  data: decodePhoto({
+                    data: photo.data,
+                    contentType: photo.contentType as PhotoContentType,
+                  }),
+                  contentType: photo.contentType,
+                  caption: photo.caption,
+                  isPrimary: photo.isPrimary,
+                });
+              } catch {
+                // An unreadable photo should not fail the whole import.
+              }
+            }
+            if (photos.length) {
+              // Fall back to the first surviving photo when the marked profile
+              // was among those skipped.
+              const marked = photos.findIndex((photo) => photo.isPrimary);
+              const primaryIndex = marked < 0 ? 0 : marked;
+              await tx.photo.createMany({
+                data: photos.map((photo, index) => ({
+                  personId,
+                  data: photo.data,
+                  contentType: photo.contentType,
+                  caption: photo.caption?.slice(0, 200) || null,
+                  isPrimary: index === primaryIndex,
+                  order: index,
+                })),
+              });
+            }
             for (const sibling of person.siblings) {
               const otherId = idByXref.get(sibling.xref);
               if (!otherId || otherId === personId) continue;

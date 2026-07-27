@@ -15,6 +15,7 @@ const base = {
   partnershipsB: [],
   siblingLinksA: [],
   lifeEvents: [],
+  photos: [],
 };
 
 test('a divorced and remarried family survives an export/import round trip', () => {
@@ -99,6 +100,48 @@ test('a divorced and remarried family survives an export/import round trip', () 
   assert.deepEqual(second.children, ['@I5@']);
   assert.equal(second.status, 'married');
   assert.equal(second.divorceDate, undefined);
+});
+
+test('photos survive an export/import round trip, keeping the profile choice', () => {
+  const gallery = Buffer.from('a gallery photo');
+  const portrait = Buffer.from('the profile photo');
+  const people: GedcomPerson[] = [
+    {
+      ...base,
+      id: 'mae',
+      name: 'Mae West',
+      photos: [
+        { data: gallery, contentType: 'image/png', caption: 'At the beach', isPrimary: false },
+        { data: portrait, contentType: 'image/jpeg', caption: null, isPrimary: true },
+      ],
+    },
+  ];
+
+  const parsed = parseGedcom(buildGedcom('West Family', people));
+  const photos = parsed.people[0].photos;
+  assert.equal(photos.length, 2);
+  const beach = photos.find((photo) => photo.caption === 'At the beach')!;
+  assert.equal(beach.contentType, 'image/png');
+  assert.equal(beach.isPrimary, false);
+  assert.equal(Buffer.from(beach.data, 'base64').toString(), 'a gallery photo');
+  const profile = photos.find((photo) => photo.isPrimary)!;
+  assert.equal(profile.contentType, 'image/jpeg');
+  assert.equal(Buffer.from(profile.data, 'base64').toString(), 'the profile photo');
+});
+
+test('ignores multimedia records that only reference an external file', () => {
+  const parsed = parseGedcom(
+    [
+      '0 HEAD',
+      '0 @I1@ INDI',
+      '1 NAME Solo Person',
+      '1 OBJE',
+      '2 FORM jpeg',
+      '2 FILE /photos/portrait.jpg',
+      '0 TRLR',
+    ].join('\n'),
+  );
+  assert.deepEqual(parsed.people[0].photos, []);
 });
 
 test('parses foreign files: slashed surnames, partial dates, plain MARR', () => {

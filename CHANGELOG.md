@@ -11,6 +11,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 ### Added
 
 - Add photos to any person: upload a gallery from their edit view, choose which one is their profile photo, and caption each image. The profile photo appears on their tree card and details. Images are downscaled in the browser and stored in the database, so existing backups capture them automatically.
+- Include photos in GEDCOM export and import: each photo travels inside the `.ged` file as an embedded multimedia record, so exporting and re-importing a tree keeps every image, its caption, and the profile choice. Multimedia records that only reference an external file are skipped.
 - Print the tree as a poster — or save it as a PDF — from Settings, automatically scaled to fit one landscape page with the tree name and date. Focusing the tree first prints just that person's branch.
 
 ## [0.0.6] - 2026-07-16
