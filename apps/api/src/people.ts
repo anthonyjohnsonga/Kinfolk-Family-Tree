@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
-import { date } from './utils.js';
+import { normalizeToken, tokenToDate } from './partialDate.js';
 import { treeInclude } from './queries.js';
 import type { PersonBody } from './contract.js';
 import { personBodySchema } from './schemas.js';
@@ -21,9 +21,11 @@ export function registerPeopleRoutes(app: FastifyInstance) {
           treeId: tree.id,
           name: request.body.name.trim(),
           maidenName: request.body.maidenName?.trim() || null,
-          birthDate: date(request.body.birthDate),
+          birthDate: tokenToDate(request.body.birthDate),
+          birthDateToken: normalizeToken(request.body.birthDate),
           birthPlace: request.body.birthPlace?.trim() || null,
-          deathDate: date(request.body.deathDate),
+          deathDate: tokenToDate(request.body.deathDate),
+          deathDateToken: normalizeToken(request.body.deathDate),
           deathPlace: request.body.deathPlace?.trim() || null,
           bio: request.body.bio?.trim(),
         },
@@ -47,9 +49,11 @@ export function registerPeopleRoutes(app: FastifyInstance) {
         data: {
           name: request.body.name.trim(),
           maidenName: request.body.maidenName?.trim() || null,
-          birthDate: date(request.body.birthDate),
+          birthDate: tokenToDate(request.body.birthDate),
+          birthDateToken: normalizeToken(request.body.birthDate),
           birthPlace: request.body.birthPlace?.trim() || null,
-          deathDate: date(request.body.deathDate),
+          deathDate: tokenToDate(request.body.deathDate),
+          deathDateToken: normalizeToken(request.body.deathDate),
           deathPlace: request.body.deathPlace?.trim() || null,
           bio: request.body.bio?.trim(),
         },

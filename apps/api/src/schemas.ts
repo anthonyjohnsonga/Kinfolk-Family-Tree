@@ -1,9 +1,13 @@
 import {
+  DATE_TOKEN_PATTERN,
   lifeEventTypes,
   partnershipStatuses,
   photoContentTypes,
   siblingTypes,
 } from './contract.js';
+
+// Dates arrive as partial-date tokens (see contract.ts), not strict ISO dates.
+const dateToken = { type: 'string', pattern: DATE_TOKEN_PATTERN } as const;
 
 export const personBodySchema = {
   type: 'object',
@@ -12,9 +16,9 @@ export const personBodySchema = {
   properties: {
     name: { type: 'string', minLength: 1, maxLength: 80 },
     maidenName: { type: 'string', maxLength: 80 },
-    birthDate: { type: 'string', format: 'date' },
+    birthDate: dateToken,
     birthPlace: { type: 'string', maxLength: 160 },
-    deathDate: { type: 'string', format: 'date' },
+    deathDate: dateToken,
     deathPlace: { type: 'string', maxLength: 160 },
     bio: { type: 'string', maxLength: 2000 },
     parentIds: {
@@ -33,13 +37,13 @@ export const personBodySchema = {
         properties: {
           personId: { type: 'string', format: 'uuid' },
           status: { type: 'string', enum: partnershipStatuses },
-          marriageDate: { type: 'string', format: 'date' },
-          divorceDate: { type: 'string', format: 'date' },
+          marriageDate: dateToken,
+          divorceDate: dateToken,
         },
       },
     },
     partnerId: { type: 'string', format: 'uuid' },
-    marriageDate: { type: 'string', format: 'date' },
+    marriageDate: dateToken,
     partnershipStatus: { type: 'string', enum: partnershipStatuses },
     siblings: {
       type: 'array',
@@ -63,7 +67,7 @@ export const personBodySchema = {
         required: ['type'],
         properties: {
           type: { type: 'string', enum: lifeEventTypes },
-          date: { type: 'string', format: 'date' },
+          date: dateToken,
           place: { type: 'string', maxLength: 160 },
           description: { type: 'string', maxLength: 1000 },
         },

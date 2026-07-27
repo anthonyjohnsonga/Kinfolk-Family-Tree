@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PartnershipDraft, Person } from '../types';
+import { DateField } from './DateField';
 
 const partnershipStatusOptions = [
   ['partnered', 'Partners'],
@@ -63,27 +64,17 @@ export function PartnershipManager({
                     ))}
                   </select>
                 </label>
-                <label>
-                  Marriage date
-                  <input
-                    type="date"
-                    value={partnership.marriageDate}
-                    onChange={(event) =>
-                      update(partnership.personId, { marriageDate: event.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Divorce date
-                  <input
-                    type="date"
-                    value={partnership.divorceDate}
-                    disabled={partnership.status !== 'divorced'}
-                    onChange={(event) =>
-                      update(partnership.personId, { divorceDate: event.target.value })
-                    }
-                  />
-                </label>
+                <DateField
+                  label="Marriage date"
+                  value={partnership.marriageDate}
+                  onChange={(token) => update(partnership.personId, { marriageDate: token })}
+                />
+                <DateField
+                  label="Divorce date"
+                  value={partnership.divorceDate}
+                  disabled={partnership.status !== 'divorced'}
+                  onChange={(token) => update(partnership.personId, { divorceDate: token })}
+                />
                 <button
                   type="button"
                   className="danger"

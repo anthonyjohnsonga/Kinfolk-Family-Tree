@@ -8,8 +8,10 @@ const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   name: id.charAt(0).toUpperCase() + id.slice(1),
   maidenName: null,
   birthDate: null,
+  birthDateToken: null,
   birthPlace: null,
   deathDate: null,
+  deathDateToken: null,
   deathPlace: null,
   bio: null,
   parentLinks: [],
@@ -94,7 +96,9 @@ test('direct partnerships outrank blood relationships', () => {
     partnerBId: 'b',
     status: 'married',
     marriageDate: null,
+    marriageDateToken: null,
     divorceDate: null,
+    divorceDateToken: null,
   };
   const divorce = { ...marriage, partnerAId: 'a', partnerBId: 'c', status: 'divorced' };
   const people = [

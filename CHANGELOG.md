@@ -10,6 +10,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ### Added
 
+- Record partial and approximate dates. Every date (births, deaths, marriages, divorces, and life events) can now be a full day, a month, or just a year, with an optional "circa", "before", or "after" qualifier — entered through a qualifier, year, month, and day control where month and day are optional. Dates display as entered (for example "about 1880" or "March 1950"), still sort chronologically, and carry their precision and qualifier through GEDCOM export and import.
 - Add photos to any person: upload a gallery from their edit view, choose which one is their profile photo, and caption each image. The profile photo appears on their tree card and details. Images are downscaled in the browser and stored in the database, so existing backups capture them automatically.
 - Include photos in GEDCOM export and import: each photo travels inside the `.ged` file as an embedded multimedia record, so exporting and re-importing a tree keeps every image, its caption, and the profile choice. Multimedia records that only reference an external file are skipped.
 - Print the tree as a poster — or save it as a PDF — from Settings, automatically scaled to fit one landscape page with the tree name and date. Focusing the tree first prints just that person's branch.

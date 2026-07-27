@@ -2,12 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildGedcom, parseGedcom, type GedcomPerson } from './gedcom.js';
 
-const day = (value: string) => new Date(`${value}T00:00:00Z`);
 const base = {
   maidenName: null,
-  birthDate: null,
+  birthDateToken: null,
   birthPlace: null,
-  deathDate: null,
+  deathDateToken: null,
   deathPlace: null,
   bio: null,
   parentLinks: [],
@@ -23,15 +22,15 @@ test('a divorced and remarried family survives an export/import round trip', () 
     partnerAId: 'alice',
     partnerBId: 'bob',
     status: 'divorced',
-    marriageDate: day('1980-06-15'),
-    divorceDate: day('1995-02-01'),
+    marriageDateToken: '1980-06-15',
+    divorceDateToken: '1995-02-01',
   };
   const marriage2 = {
     partnerAId: 'alice',
     partnerBId: 'carl',
     status: 'married',
-    marriageDate: day('1998-09-09'),
-    divorceDate: null,
+    marriageDateToken: '1998-09-09',
+    divorceDateToken: null,
   };
   const people: GedcomPerson[] = [
     {
@@ -39,13 +38,13 @@ test('a divorced and remarried family survives an export/import round trip', () 
       id: 'alice',
       name: 'Alice Marie Jones',
       maidenName: 'Smith',
-      birthDate: day('1955-03-12'),
+      birthDateToken: '1955-03-12',
       birthPlace: 'Atlanta, Georgia',
       bio: 'Loved gardening.\nKept every letter.',
       partnershipsA: [marriage1, marriage2],
       lifeEvents: [
-        { type: 'residence', date: day('1975-01-01'), place: 'Savannah', description: null },
-        { type: 'military', date: null, place: null, description: 'Army nurse' },
+        { type: 'residence', dateToken: '1975-01-01', place: 'Savannah', description: null },
+        { type: 'military', dateToken: null, place: null, description: 'Army nurse' },
       ],
     },
     { ...base, id: 'bob', name: 'Bob Jones', partnershipsB: [marriage1] },
@@ -64,7 +63,7 @@ test('a divorced and remarried family survives an export/import round trip', () 
       ...base,
       id: 'evan',
       name: 'Evan Bell',
-      deathDate: day('2020-11-30'),
+      deathDateToken: '2020-11-30',
       parentLinks: [
         { parentId: 'alice', childId: 'evan' },
         { parentId: 'carl', childId: 'evan' },
@@ -166,10 +165,23 @@ test('parses foreign files: slashed surnames, partial dates, plain MARR', () => 
   );
   assert.equal(parsed.name, 'Imported family tree');
   assert.equal(parsed.people[0].name, 'John Smith');
-  assert.equal(parsed.people[0].birthDate, '1950-03-01');
-  assert.equal(parsed.people[1].birthDate, '1952-01-01');
+  // "ABT MAR 1950" keeps its month precision and approximate qualifier.
+  assert.equal(parsed.people[0].birthDate, '~1950-03');
+  assert.equal(parsed.people[1].birthDate, '1952');
   assert.equal(parsed.families[0].status, 'married');
   assert.equal(parsed.families[0].marriageDate, undefined);
+});
+
+test('partial dates and qualifiers survive an export/import round trip', () => {
+  const people: GedcomPerson[] = [
+    { ...base, id: 'a', name: 'Ada Lovelace', birthDateToken: '~1880', deathDateToken: '1920-06' },
+    { ...base, id: 'b', name: 'Ben Ksa', birthDateToken: '<1945', deathDateToken: '>2000' },
+  ];
+  const parsed = parseGedcom(buildGedcom('Partials', people));
+  assert.equal(parsed.people[0].birthDate, '~1880');
+  assert.equal(parsed.people[0].deathDate, '1920-06');
+  assert.equal(parsed.people[1].birthDate, '<1945');
+  assert.equal(parsed.people[1].deathDate, '>2000');
 });
 
 test('a family without MARR or _STAT stays a parent-only family', () => {

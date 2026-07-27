@@ -24,6 +24,15 @@ export type LifeEventType = (typeof lifeEventTypes)[number];
 export const partnershipStatuses = ['partnered', 'married', 'divorced', 'widowed'] as const;
 export type PartnershipStatus = (typeof partnershipStatuses)[number];
 
+// Partial-date support. A date is stored as a canonical token: an optional
+// qualifier prefix — "~" (about/circa), "<" (before), ">" (after) — followed
+// by a year, year-month, or full day. Examples: "1880", "~1880", "1950-03",
+// ">1900-06-15". The API also keeps the resolved earliest instant (a DateTime)
+// alongside the token so dates still sort chronologically.
+export const DATE_TOKEN_PATTERN = '^[~<>]?\\d{4}(-\\d{2}(-\\d{2})?)?$';
+export type DatePrecision = 'year' | 'month' | 'day';
+export type DateQualifier = 'exact' | 'about' | 'before' | 'after';
+
 // Photos are stored in the database as bytes so they travel with backups.
 // Uploads arrive as base64 to stay within the JSON API; the client downscales
 // images first, so these limits are generous for portrait-sized photos.
@@ -76,13 +85,19 @@ export type PersonBody = {
   siblingType?: SiblingType;
 };
 
+// Request date fields (birthDate, deathDate, marriageDate, divorceDate,
+// lifeEvents[].date) carry a partial-date token, not a plain ISO date. The
+// responses below return both the resolved ISO date (for sorting) and the
+// original token (for display and editing).
 export type ParentLink = { parentId: string; childId: string; type: string };
 export type Partnership = {
   partnerAId: string;
   partnerBId: string;
   status: string;
   marriageDate: string | null;
+  marriageDateToken: string | null;
   divorceDate: string | null;
+  divorceDateToken: string | null;
 };
 export type SiblingLink = { siblingAId: string; siblingBId: string; type: string };
 // id is optional because the web editor also uses this shape for unsaved drafts.
@@ -90,6 +105,7 @@ export type LifeEvent = {
   id?: string;
   type: string;
   date: string | null;
+  dateToken?: string | null;
   place: string | null;
   description: string | null;
 };
@@ -98,8 +114,10 @@ export type Person = {
   name: string;
   maidenName: string | null;
   birthDate: string | null;
+  birthDateToken: string | null;
   birthPlace: string | null;
   deathDate: string | null;
+  deathDateToken: string | null;
   deathPlace: string | null;
   bio: string | null;
   parentLinks: ParentLink[];

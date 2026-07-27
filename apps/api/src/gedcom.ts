@@ -30,17 +30,17 @@ type PartnershipRecord = {
   partnerAId: string;
   partnerBId: string;
   status: string;
-  marriageDate: Date | null;
-  divorceDate: Date | null;
+  marriageDateToken: string | null;
+  divorceDateToken: string | null;
 };
 type SiblingRecord = { siblingAId: string; siblingBId: string; type: string };
 export type GedcomPerson = {
   id: string;
   name: string;
   maidenName: string | null;
-  birthDate: Date | null;
+  birthDateToken: string | null;
   birthPlace: string | null;
-  deathDate: Date | null;
+  deathDateToken: string | null;
   deathPlace: string | null;
   bio: string | null;
   parentLinks: { parentId: string; childId: string }[];
@@ -49,7 +49,7 @@ export type GedcomPerson = {
   siblingLinksA: SiblingRecord[];
   lifeEvents: {
     type: string;
-    date: Date | null;
+    dateToken: string | null;
     place: string | null;
     description: string | null;
   }[];
@@ -58,8 +58,23 @@ export type GedcomPerson = {
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const MONTH_NUMBER = new Map(MONTHS.map((month, index) => [month, index + 1]));
-const gedcomDate = (value: Date) =>
-  `${value.getUTCDate()} ${MONTHS[value.getUTCMonth()]} ${value.getUTCFullYear()}`;
+const TOKEN_PARTS = /^([~<>]?)(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/;
+const QUALIFIER_GEDCOM: Record<string, string> = { '~': 'ABT ', '<': 'BEF ', '>': 'AFT ' };
+// Format a partial-date token as a GEDCOM date, keeping its precision and
+// mapping the ~/</> qualifier to ABT/BEF/AFT. Returns '' for a missing date.
+const gedcomDate = (token: string | null): string => {
+  const match = token && TOKEN_PARTS.exec(token);
+  if (!match) return '';
+  const [, qualifier, year, month, day] = match;
+  const monthName = month ? MONTHS[Number(month) - 1] : '';
+  const body =
+    day && monthName
+      ? `${Number(day)} ${monthName} ${year}`
+      : monthName
+        ? `${monthName} ${year}`
+        : year;
+  return (QUALIFIER_GEDCOM[qualifier] || '') + body;
+};
 const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
 
 const lifeEventTag = (type: string): { tag: string; label?: string } =>
@@ -114,8 +129,9 @@ export function buildGedcom(treeName: string, people: GedcomPerson[]): string {
     lines.push(`${level} NOTE ${clean(first)}`);
     rest.forEach((line) => lines.push(`${level + 1} CONT ${clean(line)}`));
   };
-  const pushDatePlace = (date: Date | null, place: string | null) => {
-    if (date) lines.push(`2 DATE ${gedcomDate(date)}`);
+  const pushDatePlace = (token: string | null, place: string | null) => {
+    const date = gedcomDate(token);
+    if (date) lines.push(`2 DATE ${date}`);
     if (place) lines.push(`2 PLAC ${clean(place)}`);
   };
 
@@ -130,19 +146,19 @@ export function buildGedcom(treeName: string, people: GedcomPerson[]): string {
       }`,
     );
     if (person.maidenName) lines.push(`1 _MAIDEN ${clean(person.maidenName)}`);
-    if (person.birthDate || person.birthPlace) {
+    if (person.birthDateToken || person.birthPlace) {
       lines.push('1 BIRT');
-      pushDatePlace(person.birthDate, person.birthPlace);
+      pushDatePlace(person.birthDateToken, person.birthPlace);
     }
-    if (person.deathDate || person.deathPlace) {
+    if (person.deathDateToken || person.deathPlace) {
       lines.push('1 DEAT');
-      pushDatePlace(person.deathDate, person.deathPlace);
+      pushDatePlace(person.deathDateToken, person.deathPlace);
     }
     person.lifeEvents.forEach((event) => {
       const { tag, label } = lifeEventTag(event.type);
       lines.push(`1 ${tag}`);
       if (label) lines.push(`2 TYPE ${label}`);
-      pushDatePlace(event.date, event.place);
+      pushDatePlace(event.dateToken, event.place);
       if (event.description) pushNote(2, event.description);
     });
     if (person.bio) pushNote(1, person.bio);
@@ -177,13 +193,15 @@ export function buildGedcom(treeName: string, people: GedcomPerson[]): string {
     if (second) lines.push(`1 WIFE ${personXref.get(second)}`);
     const partnership = family.partnership;
     if (partnership) {
-      if (partnership.status !== 'partnered' || partnership.marriageDate) {
+      const marriage = gedcomDate(partnership.marriageDateToken);
+      const divorce = gedcomDate(partnership.divorceDateToken);
+      if (partnership.status !== 'partnered' || marriage) {
         lines.push('1 MARR');
-        if (partnership.marriageDate) lines.push(`2 DATE ${gedcomDate(partnership.marriageDate)}`);
+        if (marriage) lines.push(`2 DATE ${marriage}`);
       }
-      if (partnership.status === 'divorced' || partnership.divorceDate) {
+      if (partnership.status === 'divorced' || divorce) {
         lines.push('1 DIV');
-        if (partnership.divorceDate) lines.push(`2 DATE ${gedcomDate(partnership.divorceDate)}`);
+        if (divorce) lines.push(`2 DATE ${divorce}`);
       }
       lines.push(`1 _STAT ${partnership.status}`);
     }
@@ -259,20 +277,28 @@ function parseNodes(text: string): GedcomNode[] {
 }
 
 // GEDCOM dates may be partial ("1950", "MAR 1950") or approximate
-// ("ABT 12 MAR 1950"); missing parts resolve to the earliest value.
+// ("ABT 12 MAR 1950"). Parsed into a partial-date token, precision and the
+// approximate/before/after qualifier are both preserved.
+const GEDCOM_QUALIFIER: Record<string, string> = {
+  ABT: '~',
+  EST: '~',
+  CAL: '~',
+  BEF: '<',
+  AFT: '>',
+};
 function isoDate(value: string): string | undefined {
-  const cleaned = value
-    .trim()
-    .toUpperCase()
-    .replace(/^(ABT|EST|CAL|AFT|BEF)\s+/, '');
+  const trimmed = value.trim().toUpperCase();
+  const qualifierMatch = /^(ABT|EST|CAL|AFT|BEF)\s+/.exec(trimmed);
+  const qualifier = qualifierMatch ? GEDCOM_QUALIFIER[qualifierMatch[1]] : '';
+  const cleaned = qualifierMatch ? trimmed.slice(qualifierMatch[0].length) : trimmed;
   const day = /^(\d{1,2})\s+([A-Z]{3})\s+(\d{3,4})$/.exec(cleaned);
   if (day && MONTH_NUMBER.has(day[2]))
-    return `${day[3].padStart(4, '0')}-${String(MONTH_NUMBER.get(day[2])).padStart(2, '0')}-${day[1].padStart(2, '0')}`;
+    return `${qualifier}${day[3].padStart(4, '0')}-${String(MONTH_NUMBER.get(day[2])).padStart(2, '0')}-${day[1].padStart(2, '0')}`;
   const month = /^([A-Z]{3})\s+(\d{3,4})$/.exec(cleaned);
   if (month && MONTH_NUMBER.has(month[1]))
-    return `${month[2].padStart(4, '0')}-${String(MONTH_NUMBER.get(month[1])).padStart(2, '0')}-01`;
+    return `${qualifier}${month[2].padStart(4, '0')}-${String(MONTH_NUMBER.get(month[1])).padStart(2, '0')}`;
   const year = /^(\d{3,4})$/.exec(cleaned);
-  if (year) return `${year[1].padStart(4, '0')}-01-01`;
+  if (year) return `${qualifier}${year[1].padStart(4, '0')}`;
   return undefined;
 }
 

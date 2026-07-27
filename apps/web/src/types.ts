@@ -2,6 +2,8 @@
 // Import types only — the web bundle must not pull in API runtime code.
 export type {
   AuthStatus,
+  DatePrecision,
+  DateQualifier,
   LifeEvent,
   ParentLink,
   Partnership,

@@ -8,8 +8,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { Person, Tree } from '../types';
-import { displayDate, inputDate, year } from '../format';
 import { photoUrl, primaryPhoto } from '../photo';
+import { formatToken, formatTokenShort } from '../partialDate';
 import {
   buildConnectorPath,
   computeGenerations,
@@ -244,7 +244,8 @@ export function TreeView({
         <h3>{p.name}</h3>
         {p.maidenName && <em>Born {p.maidenName}</em>}
         <p>
-          {year(p.birthDate)} — {p.deathDate ? year(p.deathDate) : 'present'}
+          {formatTokenShort(p.birthDateToken)} —{' '}
+          {p.deathDateToken ? formatTokenShort(p.deathDateToken) : 'present'}
         </p>
         {p.parentLinks.length > 0 && (
           <small>
@@ -314,9 +315,9 @@ export function TreeView({
                     <span className="couple-connection">
                       <span className="couple-label">
                         <strong>{married ? 'Married' : 'Partners'}</strong>
-                        {link.marriageDate && (
-                          <time dateTime={inputDate(link.marriageDate)}>
-                            {displayDate(link.marriageDate)}
+                        {link.marriageDateToken && (
+                          <time dateTime={link.marriageDate ?? undefined}>
+                            {formatToken(link.marriageDateToken)}
                           </time>
                         )}
                       </span>

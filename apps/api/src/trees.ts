@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
-import { date, ordered } from './utils.js';
+import { ordered } from './utils.js';
+import { normalizeToken, tokenToDate } from './partialDate.js';
 import { treeInclude, gedcomInclude } from './queries.js';
 import { buildGedcom, parseGedcom } from './gedcom.js';
 import { decodePhoto } from './photos.js';
-import { MAX_PHOTOS_PER_PERSON, type PhotoContentType } from './contract.js';
+import { DATE_TOKEN_PATTERN, MAX_PHOTOS_PER_PERSON, type PhotoContentType } from './contract.js';
 
 export function registerTreeRoutes(app: FastifyInstance) {
   app.get('/api/trees', async () =>
@@ -35,7 +36,7 @@ export function registerTreeRoutes(app: FastifyInstance) {
               required: ['name'],
               properties: {
                 name: { type: 'string', minLength: 1, maxLength: 80 },
-                birthDate: { type: 'string', format: 'date' },
+                birthDate: { type: 'string', pattern: DATE_TOKEN_PATTERN },
               },
             },
           },
@@ -51,7 +52,8 @@ export function registerTreeRoutes(app: FastifyInstance) {
               ? {
                   create: {
                     name: request.body.firstPerson.name.trim(),
-                    birthDate: date(request.body.firstPerson.birthDate),
+                    birthDate: tokenToDate(request.body.firstPerson.birthDate),
+                    birthDateToken: normalizeToken(request.body.firstPerson.birthDate),
                   },
                 }
               : undefined,
@@ -107,9 +109,11 @@ export function registerTreeRoutes(app: FastifyInstance) {
                 treeId: tree.id,
                 name: person.name.slice(0, 80),
                 maidenName: person.maidenName?.slice(0, 80) || null,
-                birthDate: date(person.birthDate),
+                birthDate: tokenToDate(person.birthDate),
+                birthDateToken: normalizeToken(person.birthDate),
                 birthPlace: person.birthPlace?.slice(0, 160) || null,
-                deathDate: date(person.deathDate),
+                deathDate: tokenToDate(person.deathDate),
+                deathDateToken: normalizeToken(person.deathDate),
                 deathPlace: person.deathPlace?.slice(0, 160) || null,
                 bio: person.bio?.slice(0, 2000) || null,
               },
@@ -123,7 +127,8 @@ export function registerTreeRoutes(app: FastifyInstance) {
                 data: person.lifeEvents.map((event) => ({
                   personId,
                   type: event.type,
-                  date: date(event.date),
+                  date: tokenToDate(event.date),
+                  dateToken: normalizeToken(event.date),
                   place: event.place?.slice(0, 160) || null,
                   description: event.description?.slice(0, 1000) || null,
                 })),
@@ -203,8 +208,10 @@ export function registerTreeRoutes(app: FastifyInstance) {
                   partnerAId,
                   partnerBId,
                   status: family.status,
-                  marriageDate: date(family.marriageDate),
-                  divorceDate: date(family.divorceDate),
+                  marriageDate: tokenToDate(family.marriageDate),
+                  marriageDateToken: normalizeToken(family.marriageDate),
+                  divorceDate: tokenToDate(family.divorceDate),
+                  divorceDateToken: normalizeToken(family.divorceDate),
                 },
                 update: {},
               });

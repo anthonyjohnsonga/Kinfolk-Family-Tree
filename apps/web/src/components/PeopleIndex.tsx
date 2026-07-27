@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Person, Tree } from '../types';
-import { year } from '../format';
+import { formatTokenShort } from '../partialDate';
 import { searchPeople } from '../search';
 
 export function PeopleIndex({
@@ -45,8 +45,8 @@ export function PeopleIndex({
                   <strong>{person.name}</strong>
                   {person.maidenName && <em>Born {person.maidenName}</em>}
                   <span>
-                    {year(person.birthDate)} —{' '}
-                    {person.deathDate ? year(person.deathDate) : 'present'}
+                    {formatTokenShort(person.birthDateToken)} —{' '}
+                    {person.deathDateToken ? formatTokenShort(person.deathDateToken) : 'present'}
                     {person.birthPlace ? ` · ${person.birthPlace}` : ''}
                   </span>
                 </button>

@@ -51,8 +51,10 @@ model Person {
   name               String
   maidenName         String?
   birthDate          DateTime?
+  birthDateToken     String?
   birthPlace         String?
   deathDate          DateTime?
+  deathDateToken     String?
   deathPlace         String?
   bio                String?
   createdAt          DateTime             @default(now())
@@ -90,6 +92,7 @@ model LifeEvent {
   person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
   type        String
   date        DateTime?
+  dateToken   String?
   place       String?
   description String?
   createdAt   DateTime @default(now())
@@ -121,7 +124,9 @@ model Partnership {
   partnerBId   String    @db.Uuid
   status       String    @default("partnered")
   marriageDate DateTime?
+  marriageDateToken String?
   divorceDate  DateTime?
+  divorceDateToken  String?
   partnerA     Person    @relation("PartnerA", fields: [partnerAId], references: [id], onDelete: Cascade)
   partnerB     Person    @relation("PartnerB", fields: [partnerBId], references: [id], onDelete: Cascade)
 

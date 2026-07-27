@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import type { LifeEvent, PartnershipDraft, Person, SiblingDraft, Tree } from '../types';
 import { api } from '../api';
-import { inputDate } from '../format';
 import { PartnershipManager } from './PartnershipManager';
 import { SiblingManager } from './SiblingManager';
 import { LifeEventManager } from './LifeEventManager';
 import { PhotoManager } from './PhotoManager';
+import { DateField } from './DateField';
 
 export function PersonEditor({
   tree,
@@ -21,13 +21,15 @@ export function PersonEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const others = tree.people.filter((p) => p.id !== person?.id);
+  const [birthDate, setBirthDate] = useState(person?.birthDateToken || '');
+  const [deathDate, setDeathDate] = useState(person?.deathDateToken || '');
   const [partnerships, setPartnerships] = useState<PartnershipDraft[]>(() =>
     person
       ? [...person.partnershipsA, ...person.partnershipsB].map((link) => ({
           personId: link.partnerAId === person.id ? link.partnerBId : link.partnerAId,
           status: link.status,
-          marriageDate: inputDate(link.marriageDate),
-          divorceDate: inputDate(link.divorceDate),
+          marriageDate: link.marriageDateToken || '',
+          divorceDate: link.divorceDateToken || '',
         }))
       : [],
   );
@@ -40,7 +42,7 @@ export function PersonEditor({
       : [],
   );
   const [lifeEvents, setLifeEvents] = useState<LifeEvent[]>(() =>
-    person ? person.lifeEvents.map((event) => ({ ...event, date: inputDate(event.date) })) : [],
+    person ? person.lifeEvents.map((event) => ({ ...event, date: event.dateToken || null })) : [],
   );
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,9 +52,9 @@ export function PersonEditor({
     const body = {
       name: d.get('name'),
       maidenName: d.get('maidenName') || undefined,
-      birthDate: d.get('birthDate') || undefined,
+      birthDate: birthDate || undefined,
       birthPlace: d.get('birthPlace') || undefined,
-      deathDate: d.get('deathDate') || undefined,
+      deathDate: deathDate || undefined,
       deathPlace: d.get('deathPlace') || undefined,
       bio: d.get('bio') || undefined,
       parentIds: [d.get('parent1'), d.get('parent2')].filter(Boolean),
@@ -121,26 +123,12 @@ export function PersonEditor({
               placeholder="Surname before marriage"
             />
           </label>
-          <label>
-            Birth date
-            <input
-              name="birthDate"
-              type="date"
-              defaultValue={inputDate(person?.birthDate || null)}
-            />
-          </label>
+          <DateField label="Birth date" value={birthDate} onChange={setBirthDate} />
           <label>
             Birth place
             <input name="birthPlace" maxLength={160} defaultValue={person?.birthPlace || ''} />
           </label>
-          <label>
-            Death date
-            <input
-              name="deathDate"
-              type="date"
-              defaultValue={inputDate(person?.deathDate || null)}
-            />
-          </label>
+          <DateField label="Death date" value={deathDate} onChange={setDeathDate} />
           <label>
             Death place
             <input name="deathPlace" maxLength={160} defaultValue={person?.deathPlace || ''} />

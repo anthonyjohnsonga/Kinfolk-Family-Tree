@@ -8,8 +8,10 @@ const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   name: id,
   maidenName: null,
   birthDate: null,
+  birthDateToken: null,
   birthPlace: null,
   deathDate: null,
+  deathDateToken: null,
   deathPlace: null,
   bio: null,
   parentLinks: [],
@@ -51,7 +53,9 @@ test('a partner without recorded parents joins their partner’s generation', ()
     partnerBId: 'stepdad',
     status: 'married',
     marriageDate: null,
+    marriageDateToken: null,
     divorceDate: null,
+    divorceDateToken: null,
   };
   const people = [
     person('grandma'),
@@ -109,7 +113,9 @@ test('focus keeps partners of every shown person', () => {
     partnerBId: 'b',
     status: 'married',
     marriageDate: null,
+    marriageDateToken: null,
     divorceDate: null,
+    divorceDateToken: null,
   };
   const people = [
     person('a', { partnershipsA: [marriage] }),

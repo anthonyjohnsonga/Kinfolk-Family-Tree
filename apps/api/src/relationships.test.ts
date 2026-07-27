@@ -172,7 +172,9 @@ test('replaces all partnerships with sorted pairs and parsed dates', async () =>
               partnerBId: 'z',
               status: 'divorced',
               marriageDate: utc('1980-06-15'),
+              marriageDateToken: '1980-06-15',
               divorceDate: utc('1995-02-01'),
+              divorceDateToken: '1995-02-01',
             },
             {
               treeId: 't',
@@ -180,7 +182,9 @@ test('replaces all partnerships with sorted pairs and parsed dates', async () =>
               partnerBId: 'm',
               status: 'married',
               marriageDate: utc('1998-09-09'),
+              marriageDateToken: '1998-09-09',
               divorceDate: null,
+              divorceDateToken: null,
             },
           ],
         },
@@ -225,8 +229,13 @@ test('legacy single partnerId upserts without deleting other partnerships', asyn
         partnerBId: 'z',
         status: 'married',
         marriageDate: utc('2001-05-20'),
+        marriageDateToken: '2001-05-20',
       },
-      update: { status: 'married', marriageDate: utc('2001-05-20') },
+      update: {
+        status: 'married',
+        marriageDate: utc('2001-05-20'),
+        marriageDateToken: '2001-05-20',
+      },
     },
   });
 });
@@ -293,6 +302,7 @@ test('syncLifeEvents replaces events and trims text fields', async () => {
             personId: 'p',
             type: 'residence',
             date: utc('1975-01-01'),
+            dateToken: '1975-01-01',
             place: 'Savannah',
             description: null,
           },

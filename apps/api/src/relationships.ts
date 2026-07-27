@@ -1,5 +1,6 @@
 import { db } from './db.js';
-import { date, ordered } from './utils.js';
+import { ordered } from './utils.js';
+import { normalizeToken, tokenToDate } from './partialDate.js';
 import type { PersonBody } from './contract.js';
 
 async function assertMembers(treeId: string, ids: string[], client: typeof db) {
@@ -54,8 +55,10 @@ export async function syncRelationships(
               partnerAId,
               partnerBId,
               status: partnership.status,
-              marriageDate: date(partnership.marriageDate),
-              divorceDate: date(partnership.divorceDate),
+              marriageDate: tokenToDate(partnership.marriageDate),
+              marriageDateToken: normalizeToken(partnership.marriageDate),
+              divorceDate: tokenToDate(partnership.divorceDate),
+              divorceDateToken: normalizeToken(partnership.divorceDate),
             };
           }),
         });
@@ -68,11 +71,13 @@ export async function syncRelationships(
           partnerAId,
           partnerBId,
           status: body.partnershipStatus || 'partnered',
-          marriageDate: date(body.marriageDate),
+          marriageDate: tokenToDate(body.marriageDate),
+          marriageDateToken: normalizeToken(body.marriageDate),
         },
         update: {
           status: body.partnershipStatus || 'partnered',
-          marriageDate: date(body.marriageDate),
+          marriageDate: tokenToDate(body.marriageDate),
+          marriageDateToken: normalizeToken(body.marriageDate),
         },
       });
     }
@@ -107,7 +112,8 @@ export async function syncLifeEvents(personId: string, body: PersonBody, client:
         data: body.lifeEvents.map((event) => ({
           personId,
           type: event.type,
-          date: date(event.date),
+          date: tokenToDate(event.date),
+          dateToken: normalizeToken(event.date),
           place: event.place?.trim() || null,
           description: event.description?.trim() || null,
         })),

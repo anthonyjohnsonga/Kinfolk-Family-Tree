@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import type { Person, Tree } from '../types';
-import { displayDate } from '../format';
+import { formatToken } from '../partialDate';
 import { describeRelationship } from '../relationship';
 import { photoUrl, primaryPhoto } from '../photo';
 import { eventLabel } from './LifeEventManager';
@@ -55,26 +55,38 @@ export function PersonDetails({
       link.siblingAId === person.id ? link.siblingBId : link.siblingAId,
     ),
   );
+  // Each entry keeps the resolved ISO date for chronological sorting and the
+  // original token for display, so partial dates read as entered.
   const timeline = [
-    ...(person.birthDate || person.birthPlace
-      ? [{ type: 'Birth', date: person.birthDate, place: person.birthPlace, description: null }]
+    ...(person.birthDateToken || person.birthPlace
+      ? [
+          {
+            type: 'Birth',
+            sort: person.birthDate,
+            token: person.birthDateToken,
+            place: person.birthPlace,
+            description: null,
+          },
+        ]
       : []),
     ...partnerships.flatMap(({ partnership, partner }) => [
-      ...(partnership.marriageDate
+      ...(partnership.marriageDateToken
         ? [
             {
               type: 'Marriage',
-              date: partnership.marriageDate,
+              sort: partnership.marriageDate,
+              token: partnership.marriageDateToken,
               place: null,
               description: `Married ${partner!.name}`,
             },
           ]
         : []),
-      ...(partnership.divorceDate
+      ...(partnership.divorceDateToken
         ? [
             {
               type: 'Divorce',
-              date: partnership.divorceDate,
+              sort: partnership.divorceDate,
+              token: partnership.divorceDateToken,
               place: null,
               description: `Divorced ${partner!.name}`,
             },
@@ -83,14 +95,23 @@ export function PersonDetails({
     ]),
     ...person.lifeEvents.map((event) => ({
       type: eventLabel(event.type),
-      date: event.date,
+      sort: event.date,
+      token: event.dateToken ?? null,
       place: event.place,
       description: event.description,
     })),
-    ...(person.deathDate || person.deathPlace
-      ? [{ type: 'Death', date: person.deathDate, place: person.deathPlace, description: null }]
+    ...(person.deathDateToken || person.deathPlace
+      ? [
+          {
+            type: 'Death',
+            sort: person.deathDate,
+            token: person.deathDateToken,
+            place: person.deathPlace,
+            description: null,
+          },
+        ]
       : []),
-  ].sort((left, right) => (left.date || '9999').localeCompare(right.date || '9999'));
+  ].sort((left, right) => (left.sort || '9999').localeCompare(right.sort || '9999'));
   return (
     <div className="overlay">
       <article className="modal person-details">
@@ -113,13 +134,15 @@ export function PersonDetails({
         <div className="detail-facts">
           <div>
             <span>Born</span>
-            <strong>{person.birthDate ? displayDate(person.birthDate) : 'Unknown date'}</strong>
+            <strong>
+              {person.birthDateToken ? formatToken(person.birthDateToken) : 'Unknown date'}
+            </strong>
             {person.birthPlace && <p>{person.birthPlace}</p>}
           </div>
           <div>
             <span>Died</span>
             <strong>
-              {person.deathDate ? displayDate(person.deathDate) : 'Living or unknown'}
+              {person.deathDateToken ? formatToken(person.deathDateToken) : 'Living or unknown'}
             </strong>
             {person.deathPlace && <p>{person.deathPlace}</p>}
           </div>
@@ -144,11 +167,11 @@ export function PersonDetails({
                 <dt>{partnershipTitle(partnership.status)}</dt>
                 <dd>
                   {partner!.name}
-                  {partnership.marriageDate
-                    ? ` · Married ${displayDate(partnership.marriageDate)}`
+                  {partnership.marriageDateToken
+                    ? ` · Married ${formatToken(partnership.marriageDateToken)}`
                     : ''}
-                  {partnership.divorceDate
-                    ? ` · Divorced ${displayDate(partnership.divorceDate)}`
+                  {partnership.divorceDateToken
+                    ? ` · Divorced ${formatToken(partnership.divorceDateToken)}`
                     : ''}
                 </dd>
               </Fragment>
@@ -167,8 +190,8 @@ export function PersonDetails({
           {timeline.length ? (
             <ol className="life-timeline">
               {timeline.map((event, index) => (
-                <li key={`${event.type}-${event.date || index}-${index}`}>
-                  <time>{event.date ? displayDate(event.date) : 'Date unknown'}</time>
+                <li key={`${event.type}-${event.sort || index}-${index}`}>
+                  <time>{event.token ? formatToken(event.token) : 'Date unknown'}</time>
                   <div>
                     <strong>{event.type}</strong>
                     {event.place && <p>{event.place}</p>}

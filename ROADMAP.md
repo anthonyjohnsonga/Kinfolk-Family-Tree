@@ -14,6 +14,7 @@ This roadmap records the planned feature sequence for Kinfolk. Completed work ma
 | 8 | People search and index | Complete (`v0.0.6`) | Find any person by name, maiden name, or place and open their details. |
 | 9 | Relationship calculator | Complete (`v0.0.6`) | Explain how any two people are related through their nearest shared ancestor. |
 | 10 | Printable tree poster | Complete (unreleased) | Print or save the tree as a one-page landscape poster, including focused branches. |
+| 11 | Partial and approximate dates | Complete (unreleased) | Record year-only, month, or full dates with optional circa/before/after qualifiers; precision survives display, sorting, and GEDCOM. |
 
 ## Design principles
 

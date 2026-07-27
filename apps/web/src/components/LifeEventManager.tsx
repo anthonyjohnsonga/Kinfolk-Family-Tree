@@ -1,4 +1,5 @@
 import type { LifeEvent } from '../types';
+import { DateField } from './DateField';
 
 const lifeEventTypeOptions = [
   ['residence', 'Residence'],
@@ -46,14 +47,11 @@ export function LifeEventManager({
                   ))}
                 </select>
               </label>
-              <label>
-                Date
-                <input
-                  type="date"
-                  value={event.date || ''}
-                  onChange={(change) => update(index, { date: change.target.value || null })}
-                />
-              </label>
+              <DateField
+                label="Date"
+                value={event.date || ''}
+                onChange={(token) => update(index, { date: token || null })}
+              />
               <label className="event-place">
                 Place
                 <input
