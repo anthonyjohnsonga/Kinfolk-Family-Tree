@@ -21,6 +21,10 @@ import {
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2.5;
 const clampScale = (value: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+// How far the pointer must travel before a press counts as a pan rather than a
+// click. A few pixels of jitter is normal for a mouse and common on trackpads,
+// so this slop must be generous enough that ordinary clicks still open a card.
+const DRAG_THRESHOLD = 10;
 
 type View = { x: number; y: number; scale: number };
 const HOME_VIEW: View = { x: 0, y: 0, scale: 1 };
@@ -185,7 +189,7 @@ export function TreeView({
     if (!state || state.pointerId !== event.pointerId) return;
     const deltaX = event.clientX - state.startX;
     const deltaY = event.clientY - state.startY;
-    if (!dragged.current && Math.abs(deltaX) + Math.abs(deltaY) > 4) {
+    if (!dragged.current && Math.hypot(deltaX, deltaY) > DRAG_THRESHOLD) {
       dragged.current = true;
       // Capture the pointer only once a real pan starts. Capturing on
       // pointerdown retargets the eventual click to this section, which

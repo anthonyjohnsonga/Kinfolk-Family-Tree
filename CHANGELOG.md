@@ -2,6 +2,12 @@
 
 All notable changes to Kinfolk will be documented in this file. The project follows semantic versioning once a release tag is published.
 
+## Unreleased
+
+### Fixed
+
+- Reliably open a person's details when clicking their card in the tree. A few pixels of pointer movement — normal for a mouse and common on trackpads — were being treated as a pan and swallowing the click. The pan threshold is now measured as straight-line distance from the press point with a larger tolerance, so ordinary clicks open the person while deliberate drags still pan the tree.
+
 ## [0.0.7] - 2026-07-26
 
 ### Fixed
