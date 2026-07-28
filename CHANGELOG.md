@@ -2,6 +2,12 @@
 
 All notable changes to Kinfolk will be documented in this file. The project follows semantic versioning once a release tag is published.
 
+## Unreleased
+
+### Added
+
+- A Kinfolk favicon — the white "K" brand mark on a green circle — shown in browser tabs, bookmarks, and history, with a matching theme color for mobile browser chrome.
+
 ## [0.0.8] - 2026-07-27
 
 ### Fixed
