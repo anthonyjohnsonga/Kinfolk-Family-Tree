@@ -24,6 +24,18 @@ select:disabled {
   padding: 8px 12px;
 }
 
+/* Errors raised by the app shell itself (sign-out) sit under the top bar and
+   line up with the page gutters the hero and tree use. */
+.shell-error {
+  margin-inline: 5vw;
+}
+
+@media (max-width: 700px) {
+  .shell-error {
+    margin-inline: 16px;
+  }
+}
+
 .loading-state,
 .empty-message,
 .empty-tree {

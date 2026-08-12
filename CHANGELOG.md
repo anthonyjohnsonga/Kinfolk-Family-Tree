@@ -6,7 +6,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ### Fixed
 
-- Sign out now works. Clicking it did nothing at all: the browser announced a JSON body on a request that carries none, and the server rejected it before the sign-out route ever ran. The same mistake broke deleting a person, a photo, and a user account, which failed with a confusing "Body cannot be empty" message. All four now go through.
+- Sign out now works. Clicking it did nothing at all: the browser announced a JSON body on a request that carries none, and the server rejected it before the sign-out route ever ran. The same mistake broke deleting a person, a photo, and a user account, which failed with a confusing "Body cannot be empty" message. All four now go through. If signing out ever does fail — a restarting or unreachable server — the reason now appears beneath the top bar with a "Try again" button, instead of the click appearing to do nothing.
 
 ### Added
 

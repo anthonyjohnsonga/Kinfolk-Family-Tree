@@ -7,6 +7,7 @@ import { KinfolkApp } from './components/KinfolkApp';
 export function App() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [error, setError] = useState('');
+  const [logoutError, setLogoutError] = useState('');
   const [busy, setBusy] = useState(false);
   async function refresh() {
     setError('');
@@ -47,8 +48,11 @@ export function App() {
   }
   async function logout() {
     setBusy(true);
+    setLogoutError('');
     try {
       await api('/api/auth/logout', { method: 'POST' });
+    } catch (x) {
+      setLogoutError((x as Error).message);
     } finally {
       // Refresh even if the request failed so the shell always reflects the
       // session the server actually has, instead of silently doing nothing.
@@ -134,5 +138,12 @@ export function App() {
         </section>
       </main>
     );
-  return <KinfolkApp user={status.user} onLogout={() => void logout()} logoutBusy={busy} />;
+  return (
+    <KinfolkApp
+      user={status.user}
+      onLogout={() => void logout()}
+      logoutBusy={busy}
+      logoutError={logoutError}
+    />
+  );
 }

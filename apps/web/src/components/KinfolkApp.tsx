@@ -13,10 +13,12 @@ export function KinfolkApp({
   user,
   onLogout,
   logoutBusy,
+  logoutError,
 }: {
   user: SessionUser;
   onLogout: () => void;
   logoutBusy: boolean;
+  logoutError: string;
 }) {
   const canEdit = user.role !== 'viewer';
   const [trees, setTrees] = useState<TreeSummary[]>([]);
@@ -247,6 +249,13 @@ export function KinfolkApp({
           </button>
         </nav>
       </header>
+      {/* Sign-out is the one action the shell itself owns, so its failures
+          have nowhere else to surface. */}
+      {logoutError && (
+        <div className="shell-error">
+          <Status message={logoutError} onRetry={onLogout} />
+        </div>
+      )}
       <section className="hero">
         <div>
           <small>FAMILY TREE</small>
