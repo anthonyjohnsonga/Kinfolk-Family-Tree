@@ -1,10 +1,13 @@
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
   let response: Response;
+  // Only announce a JSON body when one is actually sent. Fastify rejects a
+  // bodyless request that still claims Content-Type: application/json with
+  // 400 FST_ERR_CTP_EMPTY_JSON_BODY, which broke sign-out and every DELETE.
+  const headers = options?.body
+    ? { 'Content-Type': 'application/json', ...options.headers }
+    : options?.headers;
   try {
-    response = await fetch(url, {
-      ...options,
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
-    });
+    response = await fetch(url, { ...options, headers });
   } catch {
     throw new Error(
       'Cannot reach the Kinfolk server. Check that Docker services are running and try again.',

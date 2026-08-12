@@ -4,6 +4,10 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ## Unreleased
 
+### Fixed
+
+- Sign out now works. Clicking it did nothing at all: the browser announced a JSON body on a request that carries none, and the server rejected it before the sign-out route ever ran. The same mistake broke deleting a person, a photo, and a user account, which failed with a confusing "Body cannot be empty" message. All four now go through.
+
 ### Added
 
 - A Kinfolk favicon — the white "K" brand mark on a green circle — shown in browser tabs, bookmarks, and history, with a matching theme color for mobile browser chrome.

@@ -49,8 +49,10 @@ export function App() {
     setBusy(true);
     try {
       await api('/api/auth/logout', { method: 'POST' });
-      await refresh();
     } finally {
+      // Refresh even if the request failed so the shell always reflects the
+      // session the server actually has, instead of silently doing nothing.
+      await refresh();
       setBusy(false);
     }
   }
