@@ -113,9 +113,21 @@ export function KinfolkApp({
       setBusy(false);
     }
   }
+  // Sign-out belongs to the shell, so both screens render the same control.
+  const signOutButton = (
+    <button className="auth-logout secondary" onClick={onLogout} disabled={logoutBusy}>
+      Sign out · {user.username}
+    </button>
+  );
   if (!tree)
     return (
       <main className="home">
+        {/* The home screen has no top bar, so the account controls float in
+            its top-right corner. */}
+        <div className="home-account">
+          {signOutButton}
+          {logoutError && <Status message={logoutError} onRetry={onLogout} />}
+        </div>
         <div className="welcome">
           <div>
             <small>YOUR STORIES, YOUR FAMILY</small>
@@ -241,9 +253,7 @@ export function KinfolkApp({
             Find person
           </button>
           {canEdit && <button onClick={() => setEditor(null)}>＋ Add person</button>}
-          <button className="auth-logout secondary" onClick={onLogout} disabled={logoutBusy}>
-            Sign out · {user.username}
-          </button>
+          {signOutButton}
           <button className="secondary" onClick={() => setSettings(true)}>
             ⚙ Settings
           </button>

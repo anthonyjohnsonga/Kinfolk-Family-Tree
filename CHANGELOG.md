@@ -2,6 +2,12 @@
 
 All notable changes to Kinfolk will be documented in this file. The project follows semantic versioning once a release tag is published.
 
+## Unreleased
+
+### Added
+
+- Sign out from the home screen. Previously the button only existed in a tree's top bar, so landing on the tree list with no tree open left no way to sign out without opening one first. The control sits in the home screen's top-right corner and reports failures the same way the tree view does.
+
 ## [0.0.9] - 2026-08-11
 
 ### Fixed
