@@ -122,8 +122,8 @@ export function KinfolkApp({
   if (!tree)
     return (
       <main className="home">
-        {/* The home screen has no top bar, so the account controls float in
-            its top-right corner. */}
+        {/* The home screen has no top bar, so the account controls get their
+            own header row. */}
         <div className="home-account">
           {signOutButton}
           {logoutError && <Status message={logoutError} onRetry={onLogout} />}

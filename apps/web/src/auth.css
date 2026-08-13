@@ -26,8 +26,11 @@
 .auth-note { margin: 18px 0 0!important; font-size: 11px; }
 .auth-logout { padding: 8px 11px; font-size: 11px; white-space: nowrap; }
 /* The home screen is a full-bleed landing with no top bar, so its account
-   controls float in the corner instead of sitting in a header row. */
-.home { position: relative; }
-.home-account { position: absolute; top: 16px; right: 5vw; z-index: 1; display: grid; justify-items: end; max-width: min(340px, 84vw); }
-.home-account .status-error { margin: 10px 0 0; text-align: left; }
-@media(max-width:700px){.auth-card{padding:26px}.auth-logout{font-size:0}.auth-logout::before{content:'Sign out';font-size:11px}.home-account{right:16px}.home .welcome{padding-top:76px}}
+   controls sit in a slim header row above the welcome panel. Keeping them in
+   flow means a sign-out failure pushes the page down instead of covering the
+   card, and .welcome gives up its own 100vh to fill what is left. */
+.home { display: flex; flex-direction: column; }
+.home-account { display: grid; justify-items: end; gap: 10px; padding: 16px 5vw 10px; }
+.home-account .status-error { max-width: min(360px, 100%); margin: 0; text-align: left; }
+.home .welcome { flex: 1; min-height: 0; }
+@media(max-width:700px){.auth-card{padding:26px}.auth-logout{font-size:0}.auth-logout::before{content:'Sign out';font-size:11px}.home-account{padding-inline:16px}}
