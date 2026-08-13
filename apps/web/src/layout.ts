@@ -1,7 +1,41 @@
-import type { Person } from './types';
+import type { Person, Tree } from './types';
 
 export type Point = { x: number; y: number };
 export type Family = { parentIds: string[]; children: Person[] };
+
+// A cross-tree edge points at somebody this tree never loaded, and the API
+// sends a stub for each of them. Turning those stubs into ordinary Person
+// records means every algorithm below can treat them like anyone else, so no
+// generation, family, or connector code has to know a link left the tree. A
+// ghost keeps only what the stub carries; its parent edges come from the local
+// people who claim it as a child, because that row lives on this side.
+export function peopleWithForeign(tree: Tree): Person[] {
+  if (!tree.foreignPeople?.length) return tree.people;
+  const outbound = tree.people.flatMap((person) => person.childLinks);
+  return [
+    ...tree.people,
+    ...tree.foreignPeople.map((foreign) => ({
+      id: foreign.id,
+      name: foreign.name,
+      maidenName: null,
+      birthDate: null,
+      birthDateToken: foreign.birthDateToken,
+      birthPlace: null,
+      deathDate: null,
+      deathDateToken: foreign.deathDateToken,
+      deathPlace: null,
+      bio: null,
+      parentLinks: outbound.filter((link) => link.childId === foreign.id),
+      childLinks: [],
+      partnershipsA: [],
+      partnershipsB: [],
+      siblingLinksA: [],
+      siblingLinksB: [],
+      lifeEvents: [],
+      photos: [],
+    })),
+  ];
+}
 
 // Assigns each person to a generation row, returned as [generation, people]
 // pairs sorted top row first. A person's depth is max(parent depth) + 1 with a

@@ -7,7 +7,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import type { Person, Tree } from '../types';
+import type { ForeignPerson, Person, Tree } from '../types';
 import { photoUrl, primaryPhoto } from '../photo';
 import { formatToken, formatTokenShort } from '../partialDate';
 import {
@@ -15,6 +15,7 @@ import {
   computeGenerations,
   focusPeople,
   groupFamilies,
+  peopleWithForeign,
   type Point,
 } from '../layout';
 
@@ -34,12 +35,14 @@ export function TreeView({
   focusId,
   printMode = false,
   onEdit,
+  onOpenForeign,
   onClearFocus,
 }: {
   tree: Tree;
   focusId: string | null;
   printMode?: boolean;
   onEdit: (person: Person) => void;
+  onOpenForeign: (person: ForeignPerson) => void;
   onClearFocus: () => void;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -55,10 +58,18 @@ export function TreeView({
     originY: number;
   } | null>(null);
   const dragged = useRef(false);
-  const focusPerson = focusId ? tree.people.find((person) => person.id === focusId) : undefined;
+  // People this tree links to in another tree are merged in as read-only
+  // stubs, so everything below — generations, couples, connectors, focus —
+  // treats them exactly like anyone else.
+  const people = useMemo(() => peopleWithForeign(tree), [tree]);
+  const foreignById = useMemo(
+    () => new Map((tree.foreignPeople ?? []).map((person) => [person.id, person])),
+    [tree],
+  );
+  const focusPerson = focusId ? people.find((person) => person.id === focusId) : undefined;
   const visible = useMemo(
-    () => (focusPerson ? focusPeople(tree.people, focusPerson.id) : tree.people),
-    [tree, focusPerson],
+    () => (focusPerson ? focusPeople(people, focusPerson.id) : people),
+    [people, focusPerson],
   );
   const generations = useMemo(() => computeGenerations(visible), [visible]);
   useEffect(() => {
@@ -224,14 +235,21 @@ export function TreeView({
     const siblingNames = siblingLinks
       .map(
         (link) =>
-          tree.people
+          people
             .find((x) => x.id === (link.siblingAId === p.id ? link.siblingBId : link.siblingAId))
             ?.name.split(' ')[0],
       )
       .filter(Boolean);
     const profile = primaryPhoto(p.photos);
+    const foreign = foreignById.get(p.id);
     return (
-      <button className="person-card" data-person={p.id} key={p.id} onClick={() => onEdit(p)}>
+      <button
+        className={foreign ? 'person-card foreign' : 'person-card'}
+        data-person={p.id}
+        key={p.id}
+        title={foreign ? `Open ${foreign.name} in ${foreign.treeName}` : undefined}
+        onClick={() => (foreign ? onOpenForeign(foreign) : onEdit(p))}
+      >
         {profile ? (
           <b className="has-photo">
             <img src={photoUrl(profile)} alt="" />
@@ -251,11 +269,12 @@ export function TreeView({
           {formatTokenShort(p.birthDateToken)} —{' '}
           {p.deathDateToken ? formatTokenShort(p.deathDateToken) : 'present'}
         </p>
+        {foreign && <small className="foreign-badge">in {foreign.treeName}</small>}
         {p.parentLinks.length > 0 && (
           <small>
             Child of{' '}
             {p.parentLinks
-              .map((l) => tree.people.find((x) => x.id === l.parentId)?.name.split(' ')[0])
+              .map((l) => people.find((x) => x.id === l.parentId)?.name.split(' ')[0])
               .filter(Boolean)
               .join(' & ')}
           </small>

@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Person } from './types';
-import { buildConnectorPath, computeGenerations, focusPeople, groupFamilies } from './layout';
+import type { ForeignPerson, Person, Tree } from './types';
+import {
+  buildConnectorPath,
+  computeGenerations,
+  focusPeople,
+  groupFamilies,
+  peopleWithForeign,
+} from './layout';
 
 const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   id,
@@ -190,4 +196,93 @@ test('a couple connector starts from the couple line anchor', () => {
 test('the bus keeps a minimum gap when children sit close to parents', () => {
   const path = buildConnectorPath([{ x: 100, y: 100 }], [{ x: 100, y: 110 }], null);
   assert.equal(path, 'M 100 100 V 115.6 M 100 115.6 H 100 M 100 115.6 V 110');
+});
+
+const foreign = (id: string, overrides: Partial<ForeignPerson> = {}): ForeignPerson => ({
+  id,
+  name: id,
+  treeId: 'other-tree',
+  treeName: 'Other Family',
+  birthDateToken: null,
+  deathDateToken: null,
+  ...overrides,
+});
+const asTree = (people: Person[], foreignPeople: ForeignPerson[] = []): Tree => ({
+  id: 't',
+  name: 'Tree',
+  backgroundStyle: 'botanical',
+  backgroundColor: '#faf9f3',
+  treeColor: '#76927b',
+  accentColor: '#d7a74c',
+  people,
+  foreignPeople,
+});
+
+test('a tree with no cross-tree links keeps its own people untouched', () => {
+  const people = [person('a')];
+  assert.equal(peopleWithForeign(asTree(people)), people);
+});
+
+test('a foreign parent becomes a ghost the child can sit below', () => {
+  const people = [person('kid', { parentLinks: [parentLink('outsider', 'kid')] })];
+  const merged = peopleWithForeign(asTree(people, [foreign('outsider')]));
+  assert.deepEqual(
+    merged.map((p) => p.id),
+    ['kid', 'outsider'],
+  );
+  assert.deepEqual(rows(merged), [
+    [0, ['outsider']],
+    [1, ['kid']],
+  ]);
+});
+
+test('a foreign child inherits the parent edge held by this tree', () => {
+  // The row lives on the local parent, so the ghost has to be given the link
+  // for the generation and connector code to see the family at all.
+  const people = [person('mom', { childLinks: [parentLink('mom', 'faraway')] })];
+  const merged = peopleWithForeign(asTree(people, [foreign('faraway')]));
+  const ghost = merged.find((p) => p.id === 'faraway')!;
+  assert.deepEqual(ghost.parentLinks, [parentLink('mom', 'faraway')]);
+  assert.deepEqual(rows(merged), [
+    [0, ['mom']],
+    [1, ['faraway']],
+  ]);
+  assert.deepEqual(groupFamilies(merged), [{ parentIds: ['mom'], children: [ghost] }]);
+});
+
+test('a ghost carries only the detail its stub held', () => {
+  const merged = peopleWithForeign(
+    asTree([], [foreign('x', { name: 'Ada', birthDateToken: '1880', deathDateToken: '~1950' })]),
+  );
+  const ghost = merged[0];
+  assert.equal(ghost.name, 'Ada');
+  assert.equal(ghost.birthDateToken, '1880');
+  assert.equal(ghost.deathDateToken, '~1950');
+  assert.deepEqual([ghost.photos, ghost.lifeEvents, ghost.childLinks], [[], [], []]);
+  assert.equal(ghost.bio, null);
+});
+
+test('a foreign partner is pulled onto their partner generation row', () => {
+  // union() in computeGenerations only merges ids it knows, so this proves the
+  // ghost is a real array entry rather than a dangling reference.
+  const people = [
+    person('grandma'),
+    person('mom', { parentLinks: [parentLink('grandma', 'mom')] }),
+    person('dad', {
+      partnershipsA: [
+        {
+          partnerAId: 'dad',
+          partnerBId: 'inlaw',
+          status: 'married',
+          marriageDate: null,
+          marriageDateToken: null,
+          divorceDate: null,
+          divorceDateToken: null,
+        },
+      ],
+    }),
+  ];
+  const merged = peopleWithForeign(asTree(people, [foreign('inlaw')]));
+  const generation = rows(merged).find(([, ids]) => (ids as string[]).includes('inlaw'));
+  assert.deepEqual(generation, [0, ['grandma', 'dad', 'inlaw']]);
 });

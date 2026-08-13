@@ -591,6 +591,26 @@
   color: #183128;
 }
 
+/* Somebody who lives in another tree. Drawn as a stub because this tree holds
+   none of their detail, and clicking opens their own tree rather than a
+   details panel there is nothing to fill. */
+.person-card.foreign {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--tree-color) 55%, transparent);
+  background: color-mix(in srgb, white 78%, var(--tree-bg));
+  box-shadow: none;
+}
+
+.person-card.foreign b {
+  background: #eef0eb;
+  color: #68786f;
+}
+
+.person-card small.foreign-badge {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: #6b5220;
+}
+
 @media (max-width: 900px) {
   .topbar {
     height: auto;

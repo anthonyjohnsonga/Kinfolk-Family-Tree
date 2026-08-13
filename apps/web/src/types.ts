@@ -4,6 +4,7 @@ export type {
   AuthStatus,
   DatePrecision,
   DateQualifier,
+  ForeignPerson,
   LifeEvent,
   ParentLink,
   Partnership,

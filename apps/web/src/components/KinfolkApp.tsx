@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import type { Person, SessionUser, Tree, TreeSummary } from '../types';
+import type { ForeignPerson, Person, SessionUser, Tree, TreeSummary } from '../types';
 import { api } from '../api';
 import { Status } from './Status';
 import { TreeView } from './TreeView';
@@ -99,6 +99,12 @@ export function KinfolkApp({
     } finally {
       setBusy(false);
     }
+  }
+  // Following a cross-tree link means loading that person's tree and landing on
+  // them; open() clears the focus first, so it is set again once it resolves.
+  async function openForeign(person: ForeignPerson) {
+    await open(person.treeId);
+    setFocusId(person.id);
   }
   async function open(id: string) {
     setBusy(true);
@@ -283,6 +289,7 @@ export function KinfolkApp({
           focusId={focusId}
           printMode={printing}
           onEdit={(p) => setViewer(p)}
+          onOpenForeign={(person) => void openForeign(person)}
           onClearFocus={() => setFocusId(null)}
         />
       ) : (
