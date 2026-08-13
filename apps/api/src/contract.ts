@@ -121,12 +121,25 @@ export type Person = {
   deathPlace: string | null;
   bio: string | null;
   parentLinks: ParentLink[];
+  // Children who live in another tree. Same-tree children are absent: they are
+  // already described by that child's own parentLinks.
+  childLinks: ParentLink[];
   partnershipsA: Partnership[];
   partnershipsB: Partnership[];
   siblingLinksA: SiblingLink[];
   siblingLinksB: SiblingLink[];
   lifeEvents: LifeEvent[];
   photos: PhotoMeta[];
+};
+// A person in another tree that this tree links to. Carries only what it takes
+// to draw and label the far end of the edge; open their tree for the rest.
+export type ForeignPerson = {
+  id: string;
+  name: string;
+  treeId: string;
+  treeName: string;
+  birthDateToken: string | null;
+  deathDateToken: string | null;
 };
 export type Tree = {
   id: string;
@@ -136,6 +149,7 @@ export type Tree = {
   treeColor: string;
   accentColor: string;
   people: Person[];
+  foreignPeople: ForeignPerson[];
 };
 export type TreeSummary = { id: string; name: string; _count: { people: number } };
 export type AuthStatus = {

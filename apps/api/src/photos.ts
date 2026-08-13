@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
-import { treeInclude } from './queries.js';
+import { loadTree } from './queries.js';
 import {
   MAX_PHOTO_BYTES,
   MAX_PHOTOS_PER_PERSON,
@@ -51,7 +51,7 @@ export function registerPhotoRoutes(app: FastifyInstance) {
       where: { id: person.treeId },
       data: { updatedAt: new Date() },
     });
-    return db.familyTree.findUnique({ where: { id: person.treeId }, include: treeInclude });
+    return loadTree(person.treeId);
   };
 
   app.post<{ Params: { id: string }; Body: PhotoInput }>(

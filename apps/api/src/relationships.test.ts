@@ -97,11 +97,25 @@ test('rejects relating a person to themselves', async () => {
   );
 });
 
-test('rejects relatives that are not in the same tree', async () => {
+test('rejects relatives that do not exist', async () => {
   const { client } = fakeClient([]);
   await assert.rejects(
-    syncRelationships('p', 't', { name: 'x', parentIds: ['stranger'] }, client),
-    /same tree/,
+    syncRelationships('p', 't', { name: 'x', parentIds: ['ghost'] }, client),
+    /still exists/,
+  );
+});
+
+test('accepts a relative that lives in another tree', async () => {
+  // Cross-tree edges are how two trees are linked, so membership is not
+  // checked — only that the person exists.
+  const { client, calls } = fakeClient(['outsider']);
+  await syncRelationships('p', 't', { name: 'x', parentIds: ['outsider'] }, client);
+  assert.deepEqual(calls.find((call) => call.method === 'count')?.args, {
+    where: { id: { in: ['outsider'] } },
+  });
+  assert.deepEqual(
+    calls.find((call) => call.model === 'parentRelationship' && call.method === 'createMany')?.args,
+    { data: [{ treeId: 't', parentId: 'outsider', childId: 'p' }] },
   );
 });
 

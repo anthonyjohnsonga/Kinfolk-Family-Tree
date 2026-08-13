@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
 import { ordered } from './utils.js';
 import { normalizeToken, tokenToDate } from './partialDate.js';
-import { treeInclude, gedcomInclude } from './queries.js';
+import { loadTree, gedcomInclude } from './queries.js';
 import { buildGedcom, parseGedcom } from './gedcom.js';
 import { decodePhoto } from './photos.js';
 import { DATE_TOKEN_PATTERN, MAX_PHOTOS_PER_PERSON, type PhotoContentType } from './contract.js';
@@ -43,30 +43,26 @@ export function registerTreeRoutes(app: FastifyInstance) {
         },
       },
     },
-    async (request, reply) =>
-      reply.code(201).send(
-        await db.familyTree.create({
-          data: {
-            name: request.body.name.trim(),
-            people: request.body.firstPerson
-              ? {
-                  create: {
-                    name: request.body.firstPerson.name.trim(),
-                    birthDate: tokenToDate(request.body.firstPerson.birthDate),
-                    birthDateToken: normalizeToken(request.body.firstPerson.birthDate),
-                  },
-                }
-              : undefined,
-          },
-          include: treeInclude,
-        }),
-      ),
+    async (request, reply) => {
+      const created = await db.familyTree.create({
+        data: {
+          name: request.body.name.trim(),
+          people: request.body.firstPerson
+            ? {
+                create: {
+                  name: request.body.firstPerson.name.trim(),
+                  birthDate: tokenToDate(request.body.firstPerson.birthDate),
+                  birthDateToken: normalizeToken(request.body.firstPerson.birthDate),
+                },
+              }
+            : undefined,
+        },
+      });
+      return reply.code(201).send(await loadTree(created.id));
+    },
   );
   app.get<{ Params: { id: string } }>('/api/trees/:id', async (request, reply) => {
-    const tree = await db.familyTree.findUnique({
-      where: { id: request.params.id },
-      include: treeInclude,
-    });
+    const tree = await loadTree(request.params.id);
     return tree || reply.code(404).send({ message: 'Tree not found' });
   });
   app.get<{ Params: { id: string } }>('/api/trees/:id/gedcom', async (request, reply) => {
@@ -221,9 +217,7 @@ export function registerTreeRoutes(app: FastifyInstance) {
         },
         { timeout: 60_000 },
       );
-      return reply
-        .code(201)
-        .send(await db.familyTree.findUnique({ where: { id: treeId }, include: treeInclude }));
+      return reply.code(201).send(await loadTree(treeId));
     },
   );
   app.patch<{
@@ -254,11 +248,8 @@ export function registerTreeRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        return await db.familyTree.update({
-          where: { id: request.params.id },
-          data: request.body,
-          include: treeInclude,
-        });
+        await db.familyTree.update({ where: { id: request.params.id }, data: request.body });
+        return await loadTree(request.params.id);
       } catch {
         return reply.code(404).send({ message: 'Tree not found' });
       }

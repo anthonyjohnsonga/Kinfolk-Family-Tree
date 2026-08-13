@@ -15,6 +15,7 @@ const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   deathPlace: null,
   bio: null,
   parentLinks: [],
+  childLinks: [],
   partnershipsA: [],
   partnershipsB: [],
   siblingLinksA: [],

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from './db.js';
 import { normalizeToken, tokenToDate } from './partialDate.js';
-import { treeInclude } from './queries.js';
+import { loadTree } from './queries.js';
 import type { PersonBody } from './contract.js';
 import { personBodySchema } from './schemas.js';
 import { syncLifeEvents, syncRelationships } from './relationships.js';
@@ -33,9 +33,7 @@ export function registerPeopleRoutes(app: FastifyInstance) {
       await syncRelationships(person.id, tree.id, request.body);
       await syncLifeEvents(person.id, request.body);
       await db.familyTree.update({ where: { id: tree.id }, data: { updatedAt: new Date() } });
-      return reply
-        .code(201)
-        .send(await db.familyTree.findUnique({ where: { id: tree.id }, include: treeInclude }));
+      return reply.code(201).send(await loadTree(tree.id));
     },
   );
   app.patch<{ Params: { id: string }; Body: PersonBody }>(
@@ -64,7 +62,7 @@ export function registerPeopleRoutes(app: FastifyInstance) {
         where: { id: existing.treeId },
         data: { updatedAt: new Date() },
       });
-      return db.familyTree.findUnique({ where: { id: existing.treeId }, include: treeInclude });
+      return loadTree(existing.treeId);
     },
   );
   app.delete<{ Params: { id: string } }>('/api/people/:id', async (request, reply) => {

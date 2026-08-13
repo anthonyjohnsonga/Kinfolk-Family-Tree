@@ -3,12 +3,16 @@ import { ordered } from './utils.js';
 import { normalizeToken, tokenToDate } from './partialDate.js';
 import type { PersonBody } from './contract.js';
 
-async function assertMembers(treeId: string, ids: string[], client: typeof db) {
+// Relatives may live in another tree — that is how two trees are linked. Every
+// tree on this server is visible to any signed-in account, so existence is the
+// only check left; the owning treeId recorded on the row is the tree the edge
+// was created from.
+async function assertPeopleExist(ids: string[], client: typeof db) {
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return;
-  const count = await client.person.count({ where: { treeId, id: { in: unique } } });
+  const count = await client.person.count({ where: { id: { in: unique } } });
   if (count !== unique.length)
-    throw Object.assign(new Error('Every relationship must belong to the same tree'), {
+    throw Object.assign(new Error('Every relative must be a person that still exists'), {
       statusCode: 400,
     });
 }
@@ -35,7 +39,7 @@ export async function syncRelationships(
   ];
   if (relationIds.includes(personId))
     throw Object.assign(new Error('A person cannot be related to themselves'), { statusCode: 400 });
-  await assertMembers(treeId, relationIds, client);
+  await assertPeopleExist(relationIds, client);
   await client.$transaction(async (tx) => {
     await tx.parentRelationship.deleteMany({ where: { childId: personId } });
     if (body.parentIds?.length)
