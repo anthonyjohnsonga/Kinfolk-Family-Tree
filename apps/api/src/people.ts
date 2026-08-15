@@ -3,10 +3,19 @@ import { db } from './db.js';
 import { normalizeToken, tokenToDate } from './partialDate.js';
 import { loadTree } from './queries.js';
 import type { PersonBody } from './contract.js';
-import { personBodySchema } from './schemas.js';
+import { peopleSearchQuerySchema, personBodySchema } from './schemas.js';
 import { syncLifeEvents, syncRelationships } from './relationships.js';
+import { searchPeople } from './search.js';
 
 export function registerPeopleRoutes(app: FastifyInstance) {
+  // Searches people in every tree, not just one, so the editor can attach a
+  // relative who lives elsewhere. Declared before /api/people/:id-shaped routes
+  // for readability; Fastify matches the static path regardless.
+  app.get<{ Querystring: { q?: string; limit?: number } }>(
+    '/api/people',
+    { schema: { querystring: peopleSearchQuerySchema } },
+    async (request) => searchPeople(request.query.q ?? '', request.query.limit),
+  );
   app.post<{ Params: { treeId: string }; Body: PersonBody }>(
     '/api/trees/:treeId/people',
     { schema: { body: personBodySchema } },

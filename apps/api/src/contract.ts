@@ -141,6 +141,20 @@ export type ForeignPerson = {
   birthDateToken: string | null;
   deathDateToken: string | null;
 };
+// One hit from GET /api/people?q= — the cross-tree people search behind the
+// relative pickers. Like ForeignPerson but with the maiden name, because the
+// picker has to tell two people with the same married name apart. Results are
+// capped: this is a picker, not a report.
+export const MAX_PEOPLE_SEARCH_RESULTS = 25;
+export type PersonSearchResult = {
+  id: string;
+  name: string;
+  maidenName: string | null;
+  treeId: string;
+  treeName: string;
+  birthDateToken: string | null;
+  deathDateToken: string | null;
+};
 export type Tree = {
   id: string;
   name: string;

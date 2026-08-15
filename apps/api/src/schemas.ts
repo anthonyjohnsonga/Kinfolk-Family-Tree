@@ -1,5 +1,6 @@
 import {
   DATE_TOKEN_PATTERN,
+  MAX_PEOPLE_SEARCH_RESULTS,
   lifeEventTypes,
   partnershipStatuses,
   photoContentTypes,
@@ -75,6 +76,16 @@ export const personBodySchema = {
     },
     siblingId: { type: 'string', format: 'uuid' },
     siblingType: { type: 'string', enum: siblingTypes },
+  },
+} as const;
+
+export const peopleSearchQuerySchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    // A missing or blank q matches nobody; see searchPeople in search.ts.
+    q: { type: 'string', maxLength: 120 },
+    limit: { type: 'integer', minimum: 1, maximum: MAX_PEOPLE_SEARCH_RESULTS },
   },
 } as const;
 
