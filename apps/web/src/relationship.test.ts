@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Person } from './types';
-import { describeRelationship } from './relationship';
+import { ancestryLeavesTree, describeRelationship } from './relationship';
 
 const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   id,
@@ -110,6 +110,19 @@ test('direct partnerships outrank blood relationships', () => {
   ];
   assert.equal(describeRelationship(people, 'a', 'b'), 'A and B are spouses.');
   assert.equal(describeRelationship(people, 'a', 'c'), 'A and C are former spouses.');
+});
+
+test('a line that stays inside the tree needs no caveat', () => {
+  assert.equal(ancestryLeavesTree(family, 'kid', 'cousin'), false);
+});
+
+test('a parent recorded in another tree is reported as a line that leaves', () => {
+  // Grandma's parent is not among the loaded people, so the search stops there.
+  const people = [child('grandma', 'someone-elsewhere'), child('mom', 'grandma'), person('other')];
+  assert.equal(ancestryLeavesTree(people, 'mom', 'other'), true);
+  // It counts wherever it sits: either person, and the person themselves.
+  assert.equal(ancestryLeavesTree(people, 'other', 'grandma'), true);
+  assert.equal(ancestryLeavesTree(people, 'other'), false);
 });
 
 test('explicit sibling links cover step and adopted siblings', () => {

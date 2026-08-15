@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDirectory, mergeCandidates, toPicked } from './directory';
+import { buildDirectory, countCrossTreeLinks, mergeCandidates, toPicked } from './directory';
 import type { ForeignPerson, Person, Tree } from './types';
 
 const person = (id: string, name: string): Person => ({
@@ -71,6 +71,32 @@ test('the directory can name both local people and the stubs from other trees', 
 test('a tree with no cross-tree links still builds a directory', () => {
   const directory = buildDirectory(tree([person('a', 'Ada')]));
   assert.equal(directory.size, 1);
+});
+
+test('a tree that keeps to itself has no cross-tree links to warn about', () => {
+  const people = [person('a', 'Ada'), person('b', 'Cal')];
+  people[1].parentLinks = [{ parentId: 'a', childId: 'b', type: 'biological' }];
+  assert.equal(countCrossTreeLinks(tree(people)), 0);
+});
+
+test('every kind of edge that leaves the tree is counted once', () => {
+  const ada = person('a', 'Ada');
+  // A parent, a child, a partner, and a sibling, each living somewhere else.
+  ada.parentLinks = [{ parentId: 'away-1', childId: 'a', type: 'biological' }];
+  ada.childLinks = [{ parentId: 'a', childId: 'away-2', type: 'biological' }];
+  ada.partnershipsA = [
+    {
+      partnerAId: 'a',
+      partnerBId: 'away-3',
+      status: 'married',
+      marriageDate: null,
+      marriageDateToken: null,
+      divorceDate: null,
+      divorceDateToken: null,
+    },
+  ];
+  ada.siblingLinksB = [{ siblingAId: 'away-4', siblingBId: 'a', type: 'full' }];
+  assert.equal(countCrossTreeLinks(tree([ada])), 4);
 });
 
 test('local matches come first and server hits follow', () => {

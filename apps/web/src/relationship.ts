@@ -48,6 +48,19 @@ function ancestorDistances(people: Person[], startId: string): Map<string, numbe
   return distances;
 }
 
+// The calculator only ever sees one tree, and a person in another tree is not
+// loaded with parents of their own — so an ancestor line that leaves the tree
+// simply stops there, and a real relationship running through it goes unfound.
+// True when that has happened for either person, so the answer can say so.
+export function ancestryLeavesTree(people: Person[], ...startIds: string[]): boolean {
+  const byId = new Map(people.map((person) => [person.id, person]));
+  return startIds.some((startId) =>
+    [...ancestorDistances(people, startId).keys()].some((id) =>
+      byId.get(id)?.parentLinks.some((link) => !byId.has(link.parentId)),
+    ),
+  );
+}
+
 const SIBLING_LABELS: Record<string, string> = {
   sibling: 'siblings',
   full: 'siblings',

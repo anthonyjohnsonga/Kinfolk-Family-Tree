@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import type { Person, Tree } from '../types';
 import { formatToken } from '../partialDate';
-import { describeRelationship } from '../relationship';
+import { ancestryLeavesTree, describeRelationship } from '../relationship';
 import { photoUrl, primaryPhoto } from '../photo';
 import { eventLabel } from './LifeEventManager';
 
@@ -236,9 +236,18 @@ export function PersonDetails({
               </select>
             </label>
             {relativeId && (
-              <p className="relationship-result">
-                {describeRelationship(tree.people, person.id, relativeId)}
-              </p>
+              <>
+                <p className="relationship-result">
+                  {describeRelationship(tree.people, person.id, relativeId)}
+                </p>
+                {ancestryLeavesTree(tree.people, person.id, relativeId) && (
+                  <p className="caveat">
+                    One of these family lines continues in another tree. This answer is worked out
+                    from “{tree.name}” alone, so a relationship that runs through someone in another
+                    tree is not counted.
+                  </p>
+                )}
+              </>
             )}
           </section>
         )}

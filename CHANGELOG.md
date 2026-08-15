@@ -6,7 +6,7 @@ All notable changes to Kinfolk will be documented in this file. The project foll
 
 ### Added
 
-- Relationships that cross trees. A parent, spouse, or sibling no longer has to live in the tree you are editing: the relative pickers now search every tree you have, and anyone from elsewhere is marked "in <tree name>" wherever they appear. Their card is drawn on the tree as a dashed stub — the tree you are looking at holds none of their detail — and clicking it opens the tree they do live in. Two limits worth knowing: the relationship calculator cannot trace a line through someone who lives in another tree, and a GEDCOM export covers one tree, so a relationship that leaves it is left out of the file.
+- Relationships that cross trees. A parent, spouse, or sibling no longer has to live in the tree you are editing: the relative pickers now search every tree you have, and anyone from elsewhere is marked "in <tree name>" wherever they appear. Their card is drawn on the tree as a dashed stub — the tree you are looking at holds none of their detail — and clicking it opens the tree they do live in. Two limits are flagged where they apply rather than left to be discovered: the relationship calculator says so when one of the two family lines continues in another tree and its answer therefore covers this tree only, and the export panel says how many relationships reach out of the tree and will be absent from the GEDCOM file.
 - Sign out from the home screen. Previously the button only existed in a tree's top bar, so landing on the tree list with no tree open left no way to sign out without opening one first. The control sits in the home screen's top-right corner and reports failures the same way the tree view does.
 
 ## [0.0.9] - 2026-08-11

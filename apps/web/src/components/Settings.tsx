@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { SessionUser, Tree } from '../types';
 import { api } from '../api';
+import { countCrossTreeLinks } from '../directory';
 import { Status } from './Status';
 import { GedcomImportButton } from './GedcomImportButton';
 import { UserManager } from './UserManager';
@@ -24,6 +25,9 @@ export function Settings({
   onClose: () => void;
 }) {
   const canEdit = user.role !== 'viewer';
+  // Export covers one tree, so anything reaching out of it is worth saying
+  // before somebody trusts the file as a complete copy.
+  const crossTreeLinks = countCrossTreeLinks(tree);
   const isAdmin = user.role === 'admin';
   const [tab, setTab] = useState<SettingsTab>(canEdit ? 'design' : 'data');
   const [busy, setBusy] = useState(false);
@@ -186,6 +190,15 @@ export function Settings({
                 Download “{tree.name}” as a GEDCOM (.ged) file, the standard genealogy exchange
                 format. It includes people, relationships, marriages, divorces, and life events.
               </p>
+              {crossTreeLinks > 0 && (
+                <p className="caveat">
+                  {crossTreeLinks === 1
+                    ? 'One relationship here reaches'
+                    : `${crossTreeLinks} relationships here reach`}{' '}
+                  into another tree. A GEDCOM file describes a single tree, so{' '}
+                  {crossTreeLinks === 1 ? 'it is' : 'they are'} left out of the download.
+                </p>
+              )}
               <button type="button" onClick={exportGedcom} disabled={busy}>
                 {busy ? 'Working…' : 'Download GEDCOM file'}
               </button>

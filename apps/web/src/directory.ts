@@ -33,6 +33,29 @@ export function buildDirectory(tree: Tree): Map<string, PickedPerson> {
   return new Map([...local, ...foreign].map((person) => [person.id, person]));
 }
 
+// How many recorded relationships have one end outside this tree. Each is
+// counted once: only this side's copy of the edge was ever loaded, because the
+// people it points at are stubs. Used to say plainly what a GEDCOM export of
+// this tree will leave behind.
+export function countCrossTreeLinks(tree: Tree): number {
+  const local = new Set(tree.people.map((person) => person.id));
+  const outside = (id: string) => !local.has(id);
+  return tree.people.reduce((total, person) => {
+    const other = (a: string, b: string) => (a === person.id ? b : a);
+    return (
+      total +
+      person.parentLinks.filter((link) => outside(link.parentId)).length +
+      person.childLinks.filter((link) => outside(link.childId)).length +
+      [...person.partnershipsA, ...person.partnershipsB].filter((link) =>
+        outside(other(link.partnerAId, link.partnerBId)),
+      ).length +
+      [...person.siblingLinksA, ...person.siblingLinksB].filter((link) =>
+        outside(other(link.siblingAId, link.siblingBId)),
+      ).length
+    );
+  }, 0);
+}
+
 // The loaded tree's matches first — no round trip, and the usual case — then
 // anyone else the server found. Ids already spoken for (the person being
 // edited, relatives already added, the other parent) never appear, and a
