@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { Person, SiblingDraft } from '../types';
+import type { SiblingDraft } from '../types';
+import { ForeignTag, PersonPicker, type PersonDirectory } from './PersonPicker';
 
 const siblingTypeOptions = [
   ['sibling', 'Sibling'],
@@ -9,18 +10,15 @@ const siblingTypeOptions = [
   ['adopted', 'Adopted sibling'],
 ];
 export function SiblingManager({
-  people,
+  directory,
   value,
   onChange,
 }: {
-  people: Person[];
+  directory: PersonDirectory;
   value: SiblingDraft[];
   onChange: (value: SiblingDraft[]) => void;
 }) {
   const [nextId, setNextId] = useState('');
-  const available = people.filter(
-    (person) => !value.some((sibling) => sibling.personId === person.id),
-  );
   function add() {
     if (!nextId) return;
     onChange([...value, { personId: nextId, type: 'sibling' }]);
@@ -32,10 +30,13 @@ export function SiblingManager({
       {value.length ? (
         <div className="sibling-list">
           {value.map((sibling) => {
-            const person = people.find((item) => item.id === sibling.personId);
+            const person = directory.get(sibling.personId);
             return (
               <div className="sibling-row" key={sibling.personId}>
-                <strong>{person?.name || 'Unknown person'}</strong>
+                <strong>
+                  {person?.name || 'Unknown person'}
+                  <ForeignTag person={person} directory={directory} />
+                </strong>
                 <select
                   aria-label={`Relationship type for ${person?.name || 'sibling'}`}
                   value={sibling.type}
@@ -72,18 +73,14 @@ export function SiblingManager({
         <p className="relationship-empty">No sibling connections saved.</p>
       )}
       <div className="sibling-add">
-        <select
-          aria-label="Person to add as a sibling"
+        <PersonPicker
+          label="Person to add as a sibling"
+          labelHidden
+          directory={directory}
           value={nextId}
-          onChange={(event) => setNextId(event.target.value)}
-        >
-          <option value="">Select a person</option>
-          {available.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.name}
-            </option>
-          ))}
-        </select>
+          exclude={value.map((sibling) => sibling.personId)}
+          onChange={setNextId}
+        />
         <button type="button" onClick={add} disabled={!nextId}>
           Add sibling
         </button>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { PartnershipDraft, Person } from '../types';
+import type { PartnershipDraft } from '../types';
 import { DateField } from './DateField';
+import { ForeignTag, PersonPicker, type PersonDirectory } from './PersonPicker';
 
 const partnershipStatusOptions = [
   ['partnered', 'Partners'],
@@ -9,18 +10,15 @@ const partnershipStatusOptions = [
   ['widowed', 'Widowed'],
 ];
 export function PartnershipManager({
-  people,
+  directory,
   value,
   onChange,
 }: {
-  people: Person[];
+  directory: PersonDirectory;
   value: PartnershipDraft[];
   onChange: (value: PartnershipDraft[]) => void;
 }) {
   const [nextId, setNextId] = useState('');
-  const available = people.filter(
-    (person) => !value.some((partnership) => partnership.personId === person.id),
-  );
   function add() {
     if (!nextId) return;
     onChange([
@@ -42,10 +40,13 @@ export function PartnershipManager({
       {value.length ? (
         <div className="event-edit-list">
           {value.map((partnership) => {
-            const person = people.find((item) => item.id === partnership.personId);
+            const person = directory.get(partnership.personId);
             return (
               <fieldset className="event-edit-row" key={partnership.personId}>
-                <legend>{person?.name || 'Unknown person'}</legend>
+                <legend>
+                  {person?.name || 'Unknown person'}
+                  <ForeignTag person={person} directory={directory} />
+                </legend>
                 <label>
                   Status
                   <select
@@ -92,18 +93,14 @@ export function PartnershipManager({
         <p className="relationship-empty">No spouses or partners saved.</p>
       )}
       <div className="sibling-add">
-        <select
-          aria-label="Person to add as a spouse or partner"
+        <PersonPicker
+          label="Person to add as a spouse or partner"
+          labelHidden
+          directory={directory}
           value={nextId}
-          onChange={(event) => setNextId(event.target.value)}
-        >
-          <option value="">Select a person</option>
-          {available.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.name}
-            </option>
-          ))}
-        </select>
+          exclude={value.map((partnership) => partnership.personId)}
+          onChange={setNextId}
+        />
         <button type="button" onClick={add} disabled={!nextId}>
           Add partnership
         </button>

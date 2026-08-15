@@ -6,6 +6,7 @@ import { SiblingManager } from './SiblingManager';
 import { LifeEventManager } from './LifeEventManager';
 import { PhotoManager } from './PhotoManager';
 import { DateField } from './DateField';
+import { PersonPicker, usePersonDirectory } from './PersonPicker';
 
 export function PersonEditor({
   tree,
@@ -20,7 +21,15 @@ export function PersonEditor({
 }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const others = tree.people.filter((p) => p.id !== person?.id);
+  const directory = usePersonDirectory(tree, person?.id);
+  // Parents are picker state rather than form fields now: the picker can return
+  // somebody who lives in another tree, which no <select> over this tree could.
+  const [parentIds, setParentIds] = useState<[string, string]>(() => [
+    person?.parentLinks[0]?.parentId || '',
+    person?.parentLinks[1]?.parentId || '',
+  ]);
+  const setParent = (slot: 0 | 1, id: string) =>
+    setParentIds((prev) => (slot === 0 ? [id, prev[1]] : [prev[0], id]));
   const [birthDate, setBirthDate] = useState(person?.birthDateToken || '');
   const [deathDate, setDeathDate] = useState(person?.deathDateToken || '');
   const [partnerships, setPartnerships] = useState<PartnershipDraft[]>(() =>
@@ -57,7 +66,7 @@ export function PersonEditor({
       deathDate: deathDate || undefined,
       deathPlace: d.get('deathPlace') || undefined,
       bio: d.get('bio') || undefined,
-      parentIds: [d.get('parent1'), d.get('parent2')].filter(Boolean),
+      parentIds: parentIds.filter(Boolean),
       partnerships: partnerships.map(({ personId, status, marriageDate, divorceDate }) => ({
         personId,
         status,
@@ -134,30 +143,26 @@ export function PersonEditor({
             <input name="deathPlace" maxLength={160} defaultValue={person?.deathPlace || ''} />
           </label>
           <h3 className="full">Parents</h3>
-          <label>
-            Parent 1
-            <select name="parent1" defaultValue={person?.parentLinks[0]?.parentId || ''}>
-              <option value="">Unknown</option>
-              {others.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Parent 2
-            <select name="parent2" defaultValue={person?.parentLinks[1]?.parentId || ''}>
-              <option value="">Unknown</option>
-              {others.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <PartnershipManager people={others} value={partnerships} onChange={setPartnerships} />
-          <SiblingManager people={others} value={siblings} onChange={setSiblings} />
+          <PersonPicker
+            label="Parent 1"
+            directory={directory}
+            value={parentIds[0]}
+            exclude={[parentIds[1]]}
+            onChange={(id) => setParent(0, id)}
+          />
+          <PersonPicker
+            label="Parent 2"
+            directory={directory}
+            value={parentIds[1]}
+            exclude={[parentIds[0]]}
+            onChange={(id) => setParent(1, id)}
+          />
+          <PartnershipManager
+            directory={directory}
+            value={partnerships}
+            onChange={setPartnerships}
+          />
+          <SiblingManager directory={directory} value={siblings} onChange={setSiblings} />
           <LifeEventManager value={lifeEvents} onChange={setLifeEvents} />
           <label className="full">
             About

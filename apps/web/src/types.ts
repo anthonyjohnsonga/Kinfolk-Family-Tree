@@ -9,6 +9,7 @@ export type {
   ParentLink,
   Partnership,
   Person,
+  PersonSearchResult,
   PhotoMeta,
   SiblingLink,
   Tree,
