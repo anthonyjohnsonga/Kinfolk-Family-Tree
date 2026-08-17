@@ -2,7 +2,7 @@
 
 All notable changes to Kinfolk will be documented in this file. The project follows semantic versioning once a release tag is published.
 
-## Unreleased
+## [0.0.10] - 2026-08-16
 
 ### Added
 
