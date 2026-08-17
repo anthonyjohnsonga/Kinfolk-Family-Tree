@@ -6,6 +6,7 @@ import { TreeView } from './TreeView';
 import { PersonDetails } from './PersonDetails';
 import { PersonEditor } from './PersonEditor';
 import { Settings } from './Settings';
+import { SourceLibrary } from './SourceLibrary';
 import { PeopleIndex } from './PeopleIndex';
 import { GedcomImportButton } from './GedcomImportButton';
 
@@ -26,6 +27,8 @@ export function KinfolkApp({
   const [viewer, setViewer] = useState<Person | false>(false);
   const [editor, setEditor] = useState<Person | null | false>(false);
   const [settings, setSettings] = useState(false);
+  // The source library spans every tree, so it opens from the home screen too.
+  const [library, setLibrary] = useState(false);
   const [finder, setFinder] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -125,15 +128,27 @@ export function KinfolkApp({
       Sign out · {user.username}
     </button>
   );
+  // Sources are not owned by a tree, so the control sits beside sign-out on
+  // both screens rather than inside a tree's Settings.
+  const sourcesButton = (
+    <button className="secondary" onClick={() => setLibrary(true)}>
+      Sources
+    </button>
+  );
+  const sourceLibrary = library && (
+    <SourceLibrary canEdit={canEdit} onClose={() => setLibrary(false)} />
+  );
   if (!tree)
     return (
       <main className="home">
         {/* The home screen has no top bar, so the account controls get their
             own header row. */}
         <div className="home-account">
+          {sourcesButton}
           {signOutButton}
           {logoutError && <Status message={logoutError} onRetry={onLogout} />}
         </div>
+        {sourceLibrary}
         <div className="welcome">
           <div>
             <small>YOUR STORIES, YOUR FAMILY</small>
@@ -259,6 +274,7 @@ export function KinfolkApp({
             Find person
           </button>
           {canEdit && <button onClick={() => setEditor(null)}>＋ Add person</button>}
+          {sourcesButton}
           {signOutButton}
           <button className="secondary" onClick={() => setSettings(true)}>
             ⚙ Settings
@@ -333,6 +349,7 @@ export function KinfolkApp({
           onClose={() => setEditor(false)}
         />
       )}{' '}
+      {sourceLibrary}
       {settings && (
         <Settings
           tree={tree}

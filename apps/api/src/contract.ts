@@ -54,6 +54,31 @@ export type PhotoMeta = {
   createdAt: string;
 };
 
+// Sources are the evidence behind a fact, and they are shared by every tree
+// rather than owned by one: the same census page or family Bible documents
+// people across trees. Listing is capped and searchable because a library
+// accumulates for as long as the research does.
+export const MAX_SOURCE_RESULTS = 200;
+export type SourceInput = {
+  title: string;
+  author?: string;
+  publication?: string;
+  repository?: string;
+  notes?: string;
+};
+// Every field but the title is optional: real sources are often half-known,
+// and refusing to record a half-known one loses the evidence entirely.
+export type SourceRecord = {
+  id: string;
+  title: string;
+  author: string | null;
+  publication: string | null;
+  repository: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PartnershipInput = {
   personId: string;
   status: PartnershipStatus;

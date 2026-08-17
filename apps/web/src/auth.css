@@ -30,7 +30,9 @@
    flow means a sign-out failure pushes the page down instead of covering the
    card, and .welcome gives up its own 100vh to fill what is left. */
 .home { display: flex; flex-direction: column; }
-.home-account { display: grid; justify-items: end; gap: 10px; padding: 16px 5vw 10px; }
-.home-account .status-error { max-width: min(360px, 100%); margin: 0; text-align: left; }
+/* A row, so Sources and Sign out sit side by side; the error still wraps onto
+   its own line below them rather than squeezing in between. */
+.home-account { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 5vw 10px; }
+.home-account .status-error { flex-basis: 100%; max-width: min(360px, 100%); margin: 0 0 0 auto; text-align: left; }
 .home .welcome { flex: 1; min-height: 0; }
 @media(max-width:700px){.auth-card{padding:26px}.auth-logout{font-size:0}.auth-logout::before{content:'Sign out';font-size:11px}.home-account{padding-inline:16px}}

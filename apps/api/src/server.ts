@@ -6,6 +6,7 @@ import { currentUser, registerAuthRoutes } from './auth.js';
 import { registerTreeRoutes } from './trees.js';
 import { registerPeopleRoutes } from './people.js';
 import { registerPhotoRoutes } from './photos.js';
+import { registerSourceRoutes } from './sources.js';
 import { registerUserRoutes } from './users.js';
 
 // Trust exactly the bundled nginx hop so rate limiting sees the real client
@@ -40,6 +41,7 @@ app.addHook('preHandler', async (request, reply) => {
 registerTreeRoutes(app);
 registerPeopleRoutes(app);
 registerPhotoRoutes(app);
+registerSourceRoutes(app);
 registerUserRoutes(app);
 app.setErrorHandler((error: FastifyError, _request, reply) => {
   app.log.error(error);

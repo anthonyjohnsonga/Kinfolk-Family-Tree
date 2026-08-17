@@ -12,6 +12,7 @@ export type {
   PersonSearchResult,
   PhotoMeta,
   SiblingLink,
+  SourceRecord,
   Tree,
   TreeSummary,
   UserAccount,

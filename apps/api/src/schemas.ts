@@ -1,6 +1,7 @@
 import {
   DATE_TOKEN_PATTERN,
   MAX_PEOPLE_SEARCH_RESULTS,
+  MAX_SOURCE_RESULTS,
   lifeEventTypes,
   partnershipStatuses,
   photoContentTypes,
@@ -86,6 +87,41 @@ export const peopleSearchQuerySchema = {
     // A missing or blank q matches nobody; see searchPeople in search.ts.
     q: { type: 'string', maxLength: 120 },
     limit: { type: 'integer', minimum: 1, maximum: MAX_PEOPLE_SEARCH_RESULTS },
+  },
+} as const;
+
+// Shared by create and update; update reuses the properties but requires none
+// of them, so a PATCH can carry a single field.
+const sourceProperties = {
+  title: { type: 'string', minLength: 1, maxLength: 200 },
+  author: { type: 'string', maxLength: 200 },
+  publication: { type: 'string', maxLength: 300 },
+  repository: { type: 'string', maxLength: 200 },
+  notes: { type: 'string', maxLength: 2000 },
+} as const;
+
+export const sourceBodySchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title'],
+  properties: sourceProperties,
+} as const;
+
+export const sourceUpdateSchema = {
+  type: 'object',
+  additionalProperties: false,
+  minProperties: 1,
+  properties: sourceProperties,
+} as const;
+
+export const sourceSearchQuerySchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    // Unlike the people search, a blank q lists the whole library: a source
+    // list is meant to be browsed, not just searched.
+    q: { type: 'string', maxLength: 120 },
+    limit: { type: 'integer', minimum: 1, maximum: MAX_SOURCE_RESULTS },
   },
 } as const;
 

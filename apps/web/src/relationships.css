@@ -517,6 +517,95 @@
   font-weight: 600;
 }
 
+.modal.sources {
+  max-width: 600px;
+}
+
+.source-search {
+  width: 100%;
+}
+
+.source-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 11px;
+  border: 1px solid #e1e5de;
+  border-radius: 10px;
+  background: #f8faf6;
+}
+
+.source-list strong {
+  display: block;
+}
+
+.source-list small {
+  display: block;
+  margin-top: 2px;
+  color: #68786f;
+  font-size: 12px;
+}
+
+/* Notes are free text and often long, so they wrap rather than stretching the
+   modal, and keep the line breaks they were typed with. */
+.source-list p {
+  margin: 6px 0 0;
+  color: #52655b;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.source-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.source-actions button {
+  padding: 9px 11px;
+}
+
+.source-form {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e1e5de;
+  border-radius: 12px;
+  background: #f8faf6;
+}
+
+.source-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #52655b;
+}
+
+.source-form textarea {
+  resize: vertical;
+}
+
+.source-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 700px) {
+  .source-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
 .couple > .couple-connection {
   position: relative;
   display: block;
